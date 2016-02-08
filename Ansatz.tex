@@ -62,50 +62,6 @@ Die Xtext Grammatik sollte außerdem um die Vererbungskomponente erweitert werde
 \begin{lstlisting}[style=spray, aboveskip=0pt]
 shape SomeShape extends StandardShape {
 \end{lstlisting}Style erlaubt zwar bereits erweitert zu werden, doch was die Vererbung von Shapes und Mehrfachvererbung generell angeht besteht noch Bedarf, da Xtext nicht in der Lage ist, diese Features umzusetzen.
-\subsection{String evaluation}Ein erster Gedanke zur Umsetzung eines Parsermechanismus war der der dynamischen Stringevaluierung. Aus anderen funktionalen Sprachen wie zum Beispiel \textit{Clojure} sind Mechanismen bekannt, die es erlauben eine dynamische Stringevaluierung durchzuführen. Clojure ist jedoch auch ein Versuch die Vorteile der \textbf{Skript}sprachen und nebenläufigen Applikationen in einer funktionalen Sprache zusammenzubringen. Scala ist von Haus aus \textbf{keine} Skriptsprache, bietet allerdings Technologien und Mechanismen, welche ein ähnliches Feeling ermöglichen. Dahingehend ist es also interessant zu untersuchen, ob dynamische Stringevaluierungen in Scala möglich sind oder nicht. Mit anderen Worten ist es in Clojure möglich in Strings enthaltenen Code auszuführen. Die Überlegung war also einen String, der die Informationen über eine Style-, Shape- oder Diagraminstanz enthält geringfügig abzuändern um einen validen Konstruktoraufruf in Stringform zu erhalten, der anschließend evaluiert werden kann.
-Ein Beispiel im interaktiven Clojure Interpreter:
-\begin{lstlisting}[style=spray]
-> (read-string "(defn square [x] (* x x))")
-(defn square [x] (* x x))
-\end{lstlisting}Wird also beispielsweise der nachfolgende String	:
-\begin{lstlisting}[style=scala, aboveskip=0pt]
-"""Style bspStyle { font-name = "Tahoma" }"""
-\end{lstlisting}in den Folgenden umgewandelt:
-\begin{lstlisting}[style=scala, aboveskip=0pt]
-"""new Style(font-name = "Tahoma")"""
-\end{lstlisting}könnte so mit geringstmöglichem Aufwand eine neue Instanz erzeugt werden. Der Konstruktoraufruf wäre so tatsächlich möglich, da Scala sogenannte named arguments unterstützt.
-Tatsächlich verfügt scala über eine Technologie, die dieses Konzept umsetzen könnte. Es handelt sich dabei um die \textit{scala.reflect.runtime API}.
-Ob dieses Konzept so umsetzbar ist, wurde in dem interaktiven Scala interpreter getestet, zu sehen in  Listing \ref{lst:evalrepl}.
-\begin{lstlisting}[style=scala, caption={Auszug aus interaktivem Scala Interpreter zum Testen der möglichen Stringevaluierung}, label = {lst:evalrepl}]
-scala> import scala.reflect.runtime._
-import scala.reflect.runtime._
-
-scala> val cm = universe.runtimeMirror(getClass.getClassLoader)
-cm: reflect.runtime.universe.[....]
-
-scala> import scala.tools.reflect.ToolBox
-import scala.tools.reflect.ToolBox
-
-scala> val tb = cm.mkToolBox()
-tb: scala.tools.reflect.ToolBox[reflect.runtime.universe.type] = scala.to[...]
-
-scala> tb.eval(tb.parse("class A; scala.reflect.classTag[A].runtimeClass"))
-res0: Any = class __wrapper$1$c6a9fb3f39c2499a9ff6e29384816f58.__wrapper$[...]
-\end{lstlisting}Aus diesen Tests geht bereits hervor, dass es nicht möglich ist dynamisch neue Klassen zu erstellen, da die Antwort des Interpreters nicht\begin{lstlisting}[style=scala, aboveskip=0pt]
-defined class A
-\end{lstlisting}ist sondern \begin{lstlisting}[style=scala, aboveskip=0pt]
-res0: Any = class __wrapper[...]
-\end{lstlisting}Also handelt es sich bei der vermeintlich neuen Klasse A lediglich um eine Instanz vom Typ \textit{Any}. Viel wichtiger ist aber die Frage, ob über Stringevaluierung bereits kompilierte Klassen instanziiert werden können, also ob beispielsweise ein Stylekonstruktor aufgerufen werden kann. Dies soll über folgenden Test herausgefunden werden:
-\begin{lstlisting}[style=scala]
-scala> class Style
-defined class Style
-
-scala> val newStyle = tb.eval(tb.parse("new Style()"))
-scala.tools.reflect.ToolBoxError: reflective compilation has failed:
-
-not found: type Style
-\end{lstlisting}Wie man sieht landet man hier nicht auf einem grünen Zweig. Selbst wenn durch evaluierte Klassen, ebenfalls durch evaluierung instanziiert werden, können die entstandenen Objekte weiterhin nur über die scala.reflect.runtime API angesprochen werden.
-Scala ist sehr flexibel und es ist auch möglich Scala Quellcode aus einer Textdatei auszuführen, doch schlussendlich ist Scala keine Skriptsprache. Somit wurde dieser Ansatz schnell aufgegeben.
 \subsection{Reguläre Ausdrücke}Da Stringevaluierung, wie vorangehend erörtert, nicht ergebnisführend war, soll im Folgenden ein weiterer Ansatz vorgestellt werden,
 die \textit{Regulären Ausdrücke}. Über diese \textit{regulären Audrücke} könnte der Style gefiltert werden um so an an der Syntax der DSL vorbei zu kommen und an die eigentlichen Attribute zu gelangen.
 Anhand des ersten Wortes soll der Parser erkennen, um welchen Modelltyp (Style, Shape, Diagram) es sich handelt. 
