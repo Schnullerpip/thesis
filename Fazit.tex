@@ -1,0 +1,17 @@
+\chapter{Fazit}
+\section{Probleme}
+Die Arbeit war sehr Zeitaufwendig, da die bestehende Objektstruktur, die durch die Xtext grammatik beschrieben wurde auf Scala bezogen gelegentlich keinen oder wenig Sinn machte. Hin und wieder wurden auch Fehler in der definierten DSL entdeckt. 
+Da das Umsetzen einer DSL in Scala ausgehend von einer Xtext Grammatik voraussetzt, dass entsprechende Grammatik verstanden worden ist. Dauerte es außerdem eine Weile, bis alle Unklarheiten bezüglich der Grammatik beseitigt wurden. Hin und wieder machten sich Fehler erst lange Zeit später bemerkbar, so mussten ein paar male bestehende Klassen komplett neu überarbeitet werden. Auch Xtext Sprachkenntnisse waren nötig, da z.B. die Generatoren der Xtext Sprache sonst unklar erscheinen.
+Methodenaufrufe wie createColorValue, die wie in \ref{specialstyle} beschrieben worden sind,
+\begin{verbatim}
+s.layout.highlighting.unallowed.createColorValue
+\end{verbatim}sind ähnlich den implicits in Scala für Neulinge absolut unverständlich. Auch bis die Xtext Quelldateien richtig interpretiert werden konnten, verging einige Zeit.
+Da das benötigte Metamodell zur Zeit der Entwicklung noch nicht einsatzbereit war, musste sich an einigen Stellen mit Mockups geholfen werden.
+Da bestehende Schnittstellen, des MoDiGens nicht verletzt werden durften, musste die Objektstruktur möglichst derer entsprechen, die durch die Xtext Grammatik eingeführt wurde. Dies ist dahingehend problematisch, dass so auch unsaubere Beziehungen, wie die ColorOrGradient, oder ColorWithTransparency übernommen werden mussten \ref(specialstyle).
+\subsection{Scalaspezifische Probleme}
+Scalaspezifische Probleme gab es tatsächlich nicht wirklich. Scala ist einfach zu erlernen, bietet komfortable Collections, sowie eine ausgezeichnete und einheitliche Collections API. Außerdem bietet Scala Features wie \textit{case classes} und \textit{Pattern Matching}, um nur ein paar zu nennen. Diese Features sind schnell verstanden und umsetzbar. Einzig und allein die Tatsache, dass hier ein Scalaneuling am Werk war, bremste die Arbeit erheblich aus. So wurde zunächst mit langen und sehr komplexen regulären Ausdrücken versucht, beliebige Shapedefinitionen zu parsen, was aber aufgrund der Rekursion der in sich geschachtelten geometrischen Figuren unmöglich ist. Ein Scalakenner, hätte sofort zu den \textit{Parser Combinator} klassen gegriffen, diese waren dem Author zunächst aber noch nicht bekannt. Scala bietet viele Lösungen für viele Probleme, jedoch ist es insbesondere als Scalaneuling zunächst ein Labyrinth aus Möglichkeiten und oft wird erst später bemerkt, dass eine alternative Lösung besser passt.
+
+\section{Schlussfolgerung}
+\subsection{Was wurde erreicht}
+\subsection{Was wurde nicht erreicht}
+\subsection{Fazit}
