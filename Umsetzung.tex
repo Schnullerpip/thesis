@@ -1,14 +1,14 @@
 \chapter{Umsetzung}
-Basierend auf den Gedankengängen, die im Ansatz erläutert wurden \ref{ansatz}, wird in diesem Kapitel die Umsetzung beschrieben. Hierbei werden zuvor getroffene Entscheidungen oftmals revidiert und neue Entschlüsse getroffen.
+Basierend auf den Gedankengängen, die im Ansatz erläutert wurden, wird in diesem Kapitel die Umsetzung beschrieben. Hierbei werden zuvor getroffene Entscheidungen oftmals revidiert und neue Entschlüsse getroffen.
 \section{Objektstruktur}
 \subsection{Modellklassen}
 Da bevor jeder anderer Logik zunächst die zu verwendenden Klassen definiert werden müssen, sollen Diese auch zuerst vorgestellt werden.
 Die Modellklassen Style, Shape, Connection und Diagram sind entgegen des Ansatzes, diese als \textit{case classes} umzusetzen, als normale Klassen implementiert worden. Dies hängt damit zusammen, dass die Parserlogik auf verschiedene Einzelparser aufgeteilt wurde.
-Entgegen der Objektstruktur, die durch die DSL in Xtext beschrieben wird, mussten einige Beziehungen geändert werden (siehe Abbildungen \ref{objectstructureStyle}, \ref{objectstructureShape}, \ref{objectstructureDiagram}).
+Entgegen der Objektstruktur, die durch die \textit{DSL} in Xtext beschrieben wird, mussten einige Beziehungen geändert werden (siehe Abbildungen \ref{objectstructureStyle}, \ref{objectstructureShape}, \ref{objectstructureDiagram}).
 Die Xtext Grammatik definiert zwar, welche Elemente nur Definitionsregeln sind und was in die Objektstruktur aufgenommen wird, jedoch liegt es letztlich beim Entwickler zu entscheiden, was in die endgültige Objektstruktur übernommen wird und was nicht.
 \subsection{Besonderheiten bei Style}\label{specialstyle}
-Bei der Umsetzung der einzelnen Modellklassen aus der Xtext Grmmatik in die Objektstruktur in Scala, kam es regelmäßig zu Situationen, in denen die Objektstruktur nicht 1:1 auf Scala übernommen werden konnten, da die verschiedenen Sprachen auch verschiedene Features bedienen, oder eben nicht (z.B. Xtext -\textgreater Schlüsselwort dispatch). Außerdem galt es bestehende komplexe Strukturen möglicherweise vereinfacht umzusetzen. Beispielsweise enthält die Definition der Styleklasse in Xtext eine sogenanntes Stylelayout, welches die eigentlichen Attribute der Styleklasse auflistet (siehe Listing \ref{lst:xtextdsl}).
-\begin{lstlisting}[style=spray, caption={stark vereinfachter Auszug aus der Xtxt Grammatik, die Styles beschreibt}, label = {lst:xtextdsl}]
+Bei der Umsetzung der einzelnen Modellklassen aus der Xtext Grammatik in die Objektstruktur in Scala, kam es regelmäßig zu Situationen, in denen die Objektstruktur nicht 1:1 auf Scala übernommen werden konnte, da die verschiedenen Sprachen verschiedene Features bedienen, oder eben nicht (z.B. Xtext Schlüsselwort dispatch). Außerdem galt es bestehende komplexe Strukturen möglicherweise vereinfacht umzusetzen. Beispielsweise enthält die Definition der Style klasse in Xtext ein Style Layout, welches die eigentlichen Attribute der Style klasse auflistet (siehe Listing \ref{lst:xtextdsl}).
+\begin{lstlisting}[style=spray, caption={stark vereinfachter Auszug aus der Xtext Grammatik, die Styles beschreibt}, label = {lst:xtextdsl}]
 Style:
     {Style}
     [...]
@@ -24,23 +24,23 @@ StyleLayout:
     )
 ;
 \end{lstlisting}
-In diesem Fall wurden alle Attribute eines Styles direkt in der Styleklasse aufgelistet. Dies vereinfacht einerseits die Objektstruktur, außerdem erleichtert es den Zugriff auf die Attribute, da die Navigation durch die referenzierte Instanz eines Layouts entfällt. Des weiteren definiert die Xtext Grammatik nicht eindeutig um welche Abstraktionsform es sich bei manchen Definitionen handelt. So wird beispielsweise definiert:
+In diesem Fall wurden alle Attribute eines Styles direkt in der Style klasse aufgelistet. Dies vereinfacht einerseits die Objektstruktur, außerdem erleichtert es den Zugriff auf die Attribute, da die Navigation durch die referenzierte Instanz eines Layouts entfällt. Des weiteren definiert die Xtext Grammatik nicht eindeutig um welche Abstraktionsform es sich bei manchen Definitionen handelt. So wird beispielsweise definiert:
 \begin{lstlisting}[style=spray, aboveskip=0pt]
 ColorOrGradient: Color | Transparent | GradientRef
 \end{lstlisting}
-Also kann an Stelle eines \textit{ColorOrGradient} sowohl eine \textit{Color}-, \textit{Transparent}- oder \textit{GradientRef}definition stehen. Für das Einbetten in eine Objektstruktur sind diese Regeln grausam, da Color, Transparent und GradientRef keine gemeinsamen Eigenschaften haben. Sie lassen sich zwar unter einer gemeinsamen Abstraktion zusammenfassen, dies bereitet jedoch später im Generator Probleme. \textit{Highlighting}attribute sind beispielsweise vom Typ ColorOrGradient. Später im Generator werden für verschiedene Untertypen von ColorOrGradient einheitliche getterMethoden definiert (dies funktioniert in XText über eine sogenannte dispatch kennzeichnung), jedoch geht Gradient dabei leer aus. Wird also ein Gradient definiert, muss der Entwickler blind vertrauen, dass es nicht an der falschen Stelle eingesetzt wurde. Gibt man einem highlighting Attribut ein Gradient, was laut Abstraktion möglich ist läuft der Generator über Code, der versucht eine Methode aufzurufen, die nicht definiert ist.
+Also kann an Stelle eines \textit{ColorOrGradient} sowohl eine \textit{Color}-, \textit{Transparent}- oder \textit{GradientRef} Definition stehen. Für das Einbetten in eine Objektstruktur sind diese Regeln nicht ideal, da \textit{Color}, \textit{Transparent} und \textit{GradientRef} keine gemeinsamen Eigenschaften haben. Sie lassen sich zwar unter einer gemeinsamen Abstraktion zusammenfassen, dies bereitet jedoch später im Generator Probleme. \textit{Highlighting} Attribute sind beispielsweise vom Typ \textit{ColorOrGradient}. Später im Generator werden für verschiedene Untertypen von \textit{ColorOrGradient} einheitliche \textit{Getter} Methoden definiert (dies funktioniert in Xtext über eine sogenannte \textit{dispatch} Kennzeichnung), jedoch geht \textit{Gradient} dabei leer aus. Wird also ein \textit{Gradient} definiert, muss der Entwickler blind vertrauen, dass es nicht an der falschen Stelle eingesetzt wurde. Gibt man einem \textit{highlighting} Attribut ein \textit{Gradient}, was laut Abstraktion möglich ist läuft der Generator über Code, der versucht eine Methode aufzurufen, die nicht definiert ist:
 \begin{lstlisting}[style=scala]
 if(s.layout.highlighting.selected != null){
 			[...].layout.highlighting.selected.createColorValue;	}'''
 		}
 \end{lstlisting}
-In diesem Fall ist die Methode createColorValue für ein Gradient \textbf{nicht} beschrieben. Entwickler müssten also jedes mal wenn die entsprechende Methode aufgerufen wird, zunächst prüfen um was für eine konkrete Unterklasse von ColorOrGradient es sich handelt.
-Für die Vereinheitlichung der Klassen wurden traits benutzt. Ausdrücke wie folgender
+In diesem Fall ist die Methode \textit{createColorValue} für ein \textit{Gradient} \textbf{nicht} beschrieben. Entwickler müssten also jedes mal wenn die entsprechende Methode aufgerufen wird, zunächst prüfen um was für eine konkrete Unterklasse von \textit{ColorOrGradient} es sich handelt.
+Für die Vereinheitlichung der Klassen wurden Traits benutzt. Ausdrücke wie folgender
 \begin{lstlisting}[style=spray]
 ColorOrGradient: Color | Transparent | GradientRef;
 ColorWithTransparency: Color | Transparent;
-\end{lstlisting}zeigen, dass Xtext eine Art der Mehrfachvererbung zulässt. Color kann sowohl als ColorOrGradient, als auch ColorWithTransparency benutzt werden.
-Traits haben die Möglichkeit in eine Klasse \textit{hineingemischt} zu werden und sollen in diesem Sinne in der Regel weitere Eigenschaften hinzufügen. Hierüber wird das Problem der vermeintlichen Mehrfachvererbung gelöst, da beliebig viele Traits in die Klasse hineingemischt werden können.
+\end{lstlisting}zeigen, dass Xtext eine Art der Mehrfachvererbung zulässt. \textit{Color} kann sowohl als \textit{ColorOrGradient}, als auch \textit{ColorWithTransparency} benutzt werden.
+Traits haben die Möglichkeit in eine Klasse "`hineingemischt"' zu werden und sollen in diesem Sinne in der Regel weitere Eigenschaften hinzufügen. Hierüber wird das Problem der vermeintlichen Mehrfachvererbung gelöst, da beliebig viele Traits in die Klasse hineingemischt werden können.
 Einige Elemente wie zum Beispiel Farbkonstanten ("'light-orange"' -\textgreater LIGHT\_ORANGE, "'blue"' -\textgreater BLUE), wurden nicht wie in Xtext als Enumeration verwirklicht, sondern als \textit{case objects}.
 \begin{lstlisting}[style=scala]
 case object WHITE      extends ColorConstant {def getRGBValue = """#ffffff""" }
@@ -49,21 +49,21 @@ case object GRAY       extends ColorConstant {def getRGBValue = """#808080""" }
 case object DARK_GRAY  extends ColorConstant {def getRGBValue = """#a9a9a9""" }
 ...
 \end{lstlisting}Da Farbkonstanten (\textit{ColorConstant}) so von Superklassen erben können, können einheitliche Methoden für sie definiert werden.
-Beispielsweise ist die Methode createOpacityValue in einer Superklasse einheitlich beschrieben worden.\begin{lstlisting}[style=scala]
+Beispielsweise ist die Methode \textit{createOpacityValue} in einer Superklasse einheitlich beschrieben worden.\begin{lstlisting}[style=scala]
 trait ColorOrGradient{
    def getRGBValue:String
    def createOpacityValue:String = "1.0"
 }
-\end{lstlisting}Da ColorOrGradient ein Trait ist, erlaubt es, die Methoden vorzuimplementieren. So ist automatisch jede Farbkonstante bedient und es muss nicht erneut wie in Xtext auf eine Weise wie \textit{dispatch} getrickst werden.\linebreak In Abbildung \ref{objectstructureStyle} ist eine vereinfachte Version der entstandenen Objektstruktur zu sehen, die die wichtigsten Abhängigkeiten der Style Modellklasse darstellt.
+\end{lstlisting}Da \textit{ColorOrGradient} ein Trait ist, erlaubt es, die Methoden vor zu implementieren. So ist automatisch jede Farbkonstante bedient und es muss nicht erneut wie in Xtext auf eine Weise wie \textit{dispatch} getrickst werden.\linebreak In Abbildung \ref{objectstructureStyle} ist eine vereinfachte Version der entstandenen Objektstruktur zu sehen, die die wichtigsten Abhängigkeiten der Style Modellklasse darstellt.
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=\textwidth]{Bilder/styleObjektstruktur.png}
-\caption{Vereinfachte Objektstruktur. Im Fokus Style und seine wichtigsten Dependencies.}
+\caption{Vereinfachte Objektstruktur. Im Fokus Style und seine wichtigsten Abhängigkeiten.}
 \label{objectstructureStyle}
 \end{center}
 \end{figure}
 \subsection{Besonderheiten bei Shape}
-Für Shapes muss zunächst ein Namensproblem aufgelöst werden. Mit einer Shape wird der Wrapper definiert, der sowohl Metainformationen zu der Shape enthält und außerdem \textbf{eigentliche Shapes} in diesem Fall geometrische Figuren (\textit{geometricModel}) enthält. Ist also die Rede von \textit{geometricModel(s)}, sind die tatsächlichen Implementierungen beispielsweise einer Ellipse gemeint. Ist die Rede von einer Shape, ist die Wrapperklasse gemeint. Da die verschiedenen geometrischen Figuren einheitlich behandelt und verwaltet werden können müssen, bildet \textit{GeometricModel} ihre gemeinsame Abstraktion \ref{objectstructure}. Die konkreten geometrischen Figuren haben zwar untereinander hin und wieder Gemeinsamkeiten, doch es lassen sich tatsächlich keine allgemeinen Ähnlichkeiten feststellen. Beispielsweise haben einige zwar Angaben zur Größe, jedoch nicht alle. Aus diesem Grund definiert die abstrakte Klasse \textit{GeometricModel} lediglich eine Gemeinsamkeit, die für die Distribution von vererbten Informationen wichtig ist: Die Referenz auf ein eventuell existierendes Elternteil. Ein Rechteck, kann ein Polygon beinhalten, welches wiederum ein weiteres Rechteck beinhalten kann.
+Für Shapes muss zunächst ein Namensproblem aufgelöst werden. Mit einer Shape wird der Wrapper definiert, der sowohl Metainformationen zu der Shape enthält und außerdem \textbf{eigentliche Shapes} in diesem Fall geometrische Figuren (\textit{geometricModel}) enthält. Ist also die Rede von \textit{GeometricModels}, sind die tatsächlichen Implementierungen beispielsweise einer Ellipse gemeint. Ist die Rede von einer Shape, ist die Wrapper Klasse gemeint, welche beispielsweise Ellipsen beinhalten kann. Da die verschiedenen geometrischen Figuren einheitlich behandelt und verwaltet werden können müssen, bildet \textit{GeometricModel} ihre gemeinsame Abstraktion (siehe Abbildung \ref{objectstructureShape}). Die konkreten geometrischen Figuren haben zwar untereinander hin und wieder Gemeinsamkeiten, doch es lassen sich tatsächlich keine allgemeinen Ähnlichkeiten feststellen. Beispielsweise haben einige zwar Angaben zur Größe, jedoch nicht alle. Aus diesem Grund definiert die abstrakte Klasse \textit{GeometricModel} lediglich eine Gemeinsamkeit, die für die Distribution von vererbten Informationen wichtig ist: Die Referenz auf ein eventuell existierendes Elternteil. Ein Rechteck, kann ein Polygon beinhalten, welches wiederum ein weiteres Rechteck beinhalten kann.
 \begin{lstlisting}[style=spray]
 ellipse style StandardStyle {
     rectangle {
@@ -73,14 +73,14 @@ ellipse style StandardStyle {
 \end{lstlisting}
 In diesem Falle muss garantiert werden können, dass auch das verschachtelte Rechteck über die Style-Attribute der Ellipse verfügt.
 Die Layouts der einzelnen geometrischen Formen wurden als Traits realisiert. Der große Vorteil der Traits als \textit{rich-Interfaces} liegt darin, dass mehrere Eigenschaften(Traits) geerbt werden können. So kann jede geometrische Figur von der abstrakten Klasse \textit{GeometricModel} erben und gleichzeitig die Eigenschaft eines spezifischen Layouts besitzen.
-Die Layouts selber haben wiederum nur eine Gemeinsamkeit, nämlich die Möglichkeit einen Style zu referenzieren. Diese Eigenschaft wurde in in dem Trait \textit{Layout} bestimmt, von dem \textbf{jedes} weitere Layout erbt \ref{objectstructure}. Da die geometrischen Figuren nun keine Referenz mehr auf Layoutobjekte haben, sondern entsprechende Felder selber erben, ist auch hierbei der Navigationsaufwand deutlich verringert. Wenn ein \textit{roundedRectangle} zuvor auf seine Positionskoordinaten zugreifen wollte, gelang dies auf folgende Art und Weise:
+Die Layouts selber haben wiederum nur eine Gemeinsamkeit, nämlich die Möglichkeit einen Style zu referenzieren. Diese Eigenschaft wurde in in dem Trait \textit{Layout} bestimmt, von dem \textbf{jedes} weitere Layout erbt (siehe Abbildung \ref{objectstructureShape}). Da die geometrischen Figuren nun keine Referenz mehr auf Layout Objekte haben, sondern entsprechende Felder selber erben, ist auch hierbei der Navigationsaufwand deutlich verringert. Wenn ein \textit{roundedRectangle} zuvor auf seine Positionskoordinaten zugreifen wollte, gelang dies auf folgende Art und Weise:
 \begin{lstlisting}[style=scala, aboveskip=0pt]
-val x_coord = rr.layout.commom.x
+val x_coord = rr.layout.common.x
 \end{lstlisting}Durch die Vereinfachung der Objektstruktur können diese Informationen direkt abgerufen werden, sind aber logisch weiterhin von der erbenden Klasse getrennt und können einheitlich gewartet werden. In Abbildung \ref{objectstructureShape} ist eine vereinfachte Version der entstandenen Objektstruktur zu sehen, die die wichtigsten Abhängigkeiten der Shape und Connection Modellklassen darstellt.
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=\textwidth]{Bilder/shapeObjektstruktur.png}
-\caption{Vereinfachte Objektstruktur. Im Fokus Shape und seine wichtigsten Dependencies.}
+\caption{Vereinfachte Objektstruktur. Im Fokus Shape und seine wichtigsten Abhängigkeiten.}
 \label{objectstructureShape}
 \end{center}
 \end{figure}
@@ -91,22 +91,22 @@ Die Spray Sprache, in der Diagrams geparst werden, verknüpfen das Metamodell un
 diagram diagramName for mcoreElement (style: styleName){
 	...
 }
-\end{lstlisting}Diagrams und einige seiner Attribute verweisen auf ein Metamodell, oder dessen Felder, aus dem MoDiGen Projekt.
+\end{lstlisting}Diagrams und einige seiner Attribute verweisen auf ein Metamodell oder dessen Felder, aus dem \textit{MoDiGen} Projekt.
 Da das Metamodell zur Zeit der Entwicklung noch nicht bereit war, wurden diese Elemente mit Mockups versehen.
 Ein Auszug aus dem SprayParser:
 \begin{lstlisting}[style=scala]
 case identifier => identifier +" is a Mock, change this line!!!!"
 //TODO this is only a mock, actually Metamodel Attribute
-\end{lstlisting}Bemerkenswert an dieser Stelle ist jedoch, dass Zugriffe auf einzelne Elemente des Metamodells im Gegensatz zu \textit{Xtext} sehr einfach gestaltet werden können. Dieser Vorteil gegenüber \textit{Xtext} rührt nicht allein durch Scala, sondern der Entscheidung Metamodelle in der \textit{\textbf{J}ava \textbf{S}cript \textbf{O}bject \textbf{N}otation} in einer \textit{NoSQL} Datenbank zu hinterlegen. \textit{Xtext} benutzt \textit{XML} (\textit{E\textbf{X}tensible \textbf{M}arkup \textbf{L}anguage}) Dateien als Speichermedium. Zugriff auf spezifische Elemente erfolgt in \textit{Xtext} über das Laden der gesamten \textit{XML} Datei. Da die Entitäten der Metamodelle in \textit{MoDiGen} einzeln im \textit{JSON} Format in eine \textit{NoSQL} Datenbank eingespeist werden, kann auch einzeln auf entsprechende Elemente zugegriffen werden. Diese Möglichkeit des Datenzugriffs vermeidet (abhängig von der Dateigröße) evtl riesigen Overhead und ist auf Grund der geringeren Bandbreitenauslastung auch wesentlich performanter.\linebreak In Abbildung \ref{objectstructureDiagram} ist eine vereinfachte Version der entstandenen Objektstruktur zu sehen, die die wichtigsten Abhängigkeiten der Diagram Modellklasse darstellt.
+\end{lstlisting}Bemerkenswert an dieser Stelle ist jedoch, dass Zugriffe auf einzelne Elemente des Metamodells im Gegensatz zu \textit{Xtext} sehr einfach gestaltet werden können. Dieser Vorteil gegenüber Xtext rührt nicht allein durch Scala, sondern der Entscheidung Metamodelle in der \textit{\textbf{J}ava \textbf{S}cript \textbf{O}bject \textbf{N}otation} in einer \textit{NoSQL} Datenbank zu hinterlegen. Xtext benutzt \textit{XML} (\textit{E\textbf{X}tensible \textbf{M}arkup \textbf{L}anguage}) Dateien als Speichermedium. Zugriff auf spezifische Elemente erfolgt in \textit{Xtext} über das Laden der gesamten \textit{XML} Datei. Da die Entitäten der Metamodelle in \textit{MoDiGen} einzeln im \textit{JSON} Format in eine \textit{NoSQL} Datenbank eingespeist werden, ist es auch möglich, einzeln auf entsprechende Elemente zuzugreifen. Diese Möglichkeit des Datenzugriffs vermeidet (abhängig von der Dateigröße) unter Umständen riesigen Overhead und ist auf Grund der geringeren Bandbreitenauslastung auch wesentlich performanter. In Abbildung \ref{objectstructureDiagram} ist eine vereinfachte Version der entstandenen Objektstruktur zu sehen, die die wichtigsten Abhängigkeiten der Diagram Modellklasse darstellt.
 \begin{figure}[H]
 \begin{center}
 \includegraphics[width=\textwidth]{Bilder/diagramObjektstruktur.png}
-\caption{Vereinfachte Objektstruktur. Im Fokus Diagram und seine wichtigsten Dependencies.}
+\caption{Vereinfachte Objektstruktur. Im Fokus Diagram und seine wichtigsten Abhängigkeiten.}
 \label{objectstructureDiagram}
 \end{center}
 \end{figure}
 \subsection{Vererbung/ClassHierarchy}
-Nachdem die Modellklassen definiert worden sind, müssen diese wie bereits beschrieben auch hinsichtlich der Vererbungshierarchie verwaltet werden können. Entsprechend des Ansatzes wurde - wie ursprünglich geplant - eine generische Klasse namens \textit{ClassHierarchy} erstellt, welche sowohl Knoten definiert,
+Nachdem die Modellklassen definiert wurden, müssen diese wie bereits beschrieben auch hinsichtlich der Vererbungshierarchie verwaltet werden können. Entsprechend des Ansatzes wurde - wie ursprünglich geplant - eine generische Klasse namens \textit{ClassHierarchy} erstellt, welche sowohl Knoten definiert,
 \begin{lstlisting}[style=scala]
 sealed case class Node(data: T,
                        var parents:List[Node]= List(),
@@ -114,12 +114,12 @@ sealed case class Node(data: T,
                        var depth:Int= 0)
 \end{lstlisting}
 als auch eine Map führt, die Namen (Strings) auf entsprechende Knoten abbildet.
-Da diese Klasse im Stande sein soll, die Namen, also die tatsächlichen String  Attribute der Style- und Shapeklassen abzubilden, wurde in in der Typparameterliste folgender Viewbound definiert:
+Da diese Klasse im Stande sein soll, die Namen, also die tatsächlichen String  Attribute der Style- und Shape Klassen abzubilden, wurde in der Typparameterliste folgender \textit{Viewbound} definiert:
 \begin{lstlisting}[style=scala]
 sealed class ClassHierarchy[T <% {val name:String}](rootClass:T){
-\end{lstlisting}Die Kennzeichnung \textit{ X \textless: Y} sagt aus, dass der übergebene Typ X implizit auf den Typ Y umgewandelt werden können muss, \citet[p. 158]{braun:scala}.
+\end{lstlisting}Die Kennzeichnung \textit{ X \textless\% Y} sagt aus, dass der übergebene Typ X implizit auf den Typ Y umgewandelt werden können muss (vgl. \citet[p. 158]{braun:scala}).
 In Diesem Fall wurde ein anonymer Typ erstellt, der ein Feld \textit{name:String} besitzt. Wenn der angegebene Typ also über ein solches Feld verfügt, kann er implizit darauf abgebildet werden und wird akzeptiert.
-Desweiteren wurden mehrere apply-Methoden definiert, die den Umgang mit ClassHierarchy erleichtern sollten.
+Des weiteren wurden mehrere \textit{Apply}-Methoden definiert, die den Umgang mit \textit{ClassHierarchy} erleichtern sollen.
 \begin{lstlisting}[style=scala]
 def apply(parent:Node, className:T) =
 	parent inheritedBy className
@@ -131,22 +131,22 @@ def apply(className:T) =
 	nodeView(className.name)
 def apply(className:String) = 
 	nodeView(className)
-\end{lstlisting} Apply Methoden sind spezielle Methoden und können ohne den eigentlichen Methodennamen aufgerufen werden. Die Argumente werden einfach nach der Instanz in Klammern angegeben, \citet[p. 74]{esser:scala}. Dies ist sehr komfortabel. Eltern- und Kindbeziehungen werden in den Knotenklassen gespeichert. Leider ist ClassHierarchy so jedoch, wie sich herausstellt nicht wie gewünscht einsetztbar.
-Wird ein neuer Style oder eine neue Shape erzeugt, müssen die Eigenschaften der Elternknoten verfügbar sein, noch bevor der/die eigentliche Style/Shape instanziiert wurde, da diese Eltern und deren Felder noch vor dem Instanziieren des neuen Objekts aufgelistet und abgerufen werden. Das companion Objekt der entsprechenden Klassen sammelt erst alle Informationen an neu geparsten und an geerbten Attributen und gibt diese dann an den richtigen Konstruktor weiter (\ref{sectionInheritance}). Bevor also ein Style/Shape instanziiert ist, kann in ClassHierarchy auch nicht danach gesucht werden, es existiert ja noch nicht. Entsprechende Elternknoten des noch nicht existierenden Knotens sind so ebenfalls nicht ausfindig zu machen. Dieser Denkfehler reduziert die Brauchbarkeit der ClassHierarchy-Klasse auf die Map[String, T], welche diese noch enthält. Da die Namen der Elternklassen über die Definition der Modellklasse mitgeliefert werden, werden die Entsprechenden Elternteile über die Abbildung String=\textgreater T der Map gefunden.
-Die komplette gebrauchte Funktionalität der ClassHierarchy ist also bereits durch eine herkömmliche Map der scala.collections beschrieben. Lediglich die zusätzlichen apply-Methoden der ClassHierarchy, welche den Gebrauch der Map vereinfachen, sorgen derzeit dafür, dass die Klasse einen Nutzen erfüllt. Schließlich behalten die erzeugten Styles/Shapes eine Liste mit ihren Eltern. Da sie in sich alle Merkmale der Superklassen behalten, wäre dies nichteinmal nötig. Jedoch bleibt es zu Testzwecken nützlich eine solche Referenz zu haben, um schnell überprüfen zu können welche Werte übernommen wurden, welche nicht und warum nicht (z.B. \textit{latest-bound principle}).
+\end{lstlisting} \textit{Apply}-Methoden sind spezielle Methoden und können ohne den eigentlichen Methodennamen aufgerufen werden. Die Argumente werden einfach nach der Instanz in Klammern angegeben (vgl. \citet[p. 74]{esser:scala}). Dies ist sehr komfortabel. Eltern- und Kindbeziehungen werden in den Knotenklassen gespeichert. Leider ist \textit{ClassHierarchy} so jedoch, wie sich herausstellt, nicht wie gewünscht einsetzbar.
+Wird ein neuer Style oder eine neue Shape erzeugt, müssen die Eigenschaften der Elternknoten verfügbar sein, noch bevor der/die eigentliche Style/Shape instantiiert wurde, da diese Eltern und deren Felder noch vor dem Instantiieren des neuen Objekts aufgelistet und abgerufen werden. Das \textit{Companion Objekt} der entsprechenden Klassen sammelt erst alle Informationen an neu geparsten und an geerbten Attributen und gibt diese dann an den richtigen Konstruktor weiter (siehe Abschnitt \ref{sectionInheritance}). Bevor also ein Style/Shape instantiiert ist, kann in \textit{ClassHierarchy} auch nicht danach gesucht werden, es existiert ja noch nicht. Entsprechende Elternknoten des noch nicht existierenden Knotens sind so ebenfalls nicht ausfindig zu machen. Dieser Denkfehler reduziert die Brauchbarkeit der \textit{ClassHierarchy}-Klasse auf die Map[String, T], welche diese noch enthält. Da die Namen der Elternklassen über die Definition der Modellklasse mitgeliefert werden, werden die Entsprechenden Elternteile über die Abbildung String=\textgreater T der Map gefunden.
+Die komplette, gebrauchte Funktionalität der \textit{ClassHierarchy} ist also bereits durch eine herkömmliche Map der scala.collections beschrieben. Lediglich die zusätzlichen apply-Methoden der ClassHierarchy, welche den Gebrauch der Map vereinfachen, sorgen derzeit dafür, dass die Klasse einen Nutzen erfüllt. Schließlich behalten die erzeugten Styles/Shapes eine Liste mit ihren Eltern. Da sie in sich alle Merkmale der Superklassen behalten, wäre dies nicht einmal nötig. Jedoch bleibt es zu Testzwecken nützlich eine solche Referenz zu haben, um schnell überprüfen zu können welche Werte übernommen wurden, welche nicht und warum nicht (z.B. \textit{latest-bound principle}).
 \section{Implementierung der Parserklassen}
-Sind die Beziehungen unter den Modellklassen definiert, muss als nächstes dafür gesorgt werden, dass entsprechende Klassen auch instanziiert werden können. Da die benötigte Information für die Erstellung einer Modellklasse in Stringform bereitgestellt wird, muss also nun ein Parser eingerichtet werden, der die benötigte Umwandlung der in Stringform enthaltenen Attribute zu den richtigen Datentypen vollziehen kann.
+Sind die Beziehungen unter den Modellklassen definiert, muss als nächstes dafür gesorgt werden, dass entsprechende Klassen auch instantiiert werden können. Da die benötigte Information für die Erstellung einer Modellklasse in Stringform bereitgestellt wird, muss also nun ein Parser einzurichten, der die benötigte Umwandlung der in Stringform enthaltenen Attribute zu den richtigen Datentypen vollziehen kann.
 \subsection{Factory Klassen}
-Der Parser muss, dem Metamodell entsprechend, sowohl Style-, Shape-, als auch Diagramdefinitionen verarbeiten können (u.a) \ref{diagramshapestyle}. Entsprechend wurden Diagram.scala, Shape.scala und Style.scala erstellt. Zunächst waren diese Klassen als \textit{case classes} geplant, um bestimmte Methoden vorimplementiert benutzen zu können. Allerdings wurde schlussendlich entschieden, Teile der Parserlogik auszulagern. Gemäß dem \textit{Single Responsibility Principle}, lag es nahe sowohl einen Style-, Shape- und Diagramparser zu haben, auf die der eigentliche Parser zurückgreifen kann.
-Im Idealfall würden diese spezialisierten Parser wie Factorys agieren, um die zugehörige Klasse möglichst entkoppelt instanziieren zu können. Die Factorys wurden als companion Objekte realisiert, da diese sich hierfür besonders eignen. Diese Absicht kreuzt sich leider mit den case classes, da case classes bereits implizit über ein companion Objekt verfügen. Diese companion Objekte können nicht partiell überschrieben werden.
-Jede der (normalen) Modellklassen hat nun ein companion Objekt, welches eine \textit{parse} Methode enthält, um seine companion Klasse zu instanziieren.
-Die companion Objekte, können hierbei als \textit{Factory} angesehen werden, da ihre \textit{apply}-Methoden den Parsevorgang ebenfalls initiieren und anschließend eine neue Instanz ihrer companion Klasse zurückliefern. Vergleich \citet[p. 80]{esser:scala}
-Eine Modellklasse kann also auf diese Weise (Bsp. Style)
+Der Parser muss, dem Metamodell entsprechend, unter anderem sowohl Style-, Shape-, als auch Diagram Definitionen verarbeiten können (siehe Abbildung \ref{diagramshapestyle}). Entsprechend wurden Diagram.scala, Shape.scala und Style.scala erstellt. Zunächst waren diese Klassen als \textit{case classes} geplant, um bestimmte Methoden vorimplementiert benutzen zu können. Allerdings wurde schlussendlich entschieden, Teile der Parserlogik auszulagern. Gemäß dem \textit{Single Responsibility Principle}, lag es nahe sowohl einen Style-, Shape- und Diagramparser zu haben, auf die der eigentliche Parser zurückgreifen kann.
+Im Idealfall würden diese spezialisierten Parser wie \textit{Factorys} agieren, um die zugehörige Klasse möglichst entkoppelt instantiieren zu können. Die \textit{Factorys} wurden als \textit{Companion Objekte} realisiert, da diese sich hierfür besonders eignen. Diese Absicht kreuzt sich leider mit den \textit{case classes}, da diese bereits implizit über ein \textit{Companion Objekt} verfügen. Diese \textit{Companion Objekte} können nicht partiell überschrieben werden.
+Jede der (normalen) Modellklassen hat nun ein \textit{Companion Objekt}, welches eine \textit{parse} Methode enthält, um seine \textit{Companion Klasse} zu instantiieren.
+Die \textit{Companion Objekte}, können hierbei als \textit{Factory} angesehen werden, da ihre \textit{apply}-Methoden den Parse Vorgang ebenfalls initiieren und anschließend eine neue Instanz ihrer \textit{Companion Klasse} zurückliefern (vgl.\citet[p. 80]{esser:scala}).
+Eine Modellklasse kann also auf diese Weise (etwa Style)
 \begin{lstlisting}[style=scala, aboveskip=0pt]
 val newStyle = Style(argList)
 \end{lstlisting}
-erzeugt werden, wobei die Factorymethode Argumente in String Form auflöst (z.B. "'line-width = 4"' -\textgreater  Integer 4 wird aufgelöst und anhand des Attributnamens an der richtigen Stelle im Konstruktor platziert) und der eigentliche Konstruktor nur aufgelöste Werte als Argumente akzeptiert.
-Das oben beschriebene Prinzip, der Aufteilung der Parserlogik in mehrere kleine Parser, wird konsequent durchgeführt. So haben eigene Datentypen wie z.B. \textit{GradientAlignment} ebenfalls kleine Parsereinheiten in ihren companion Objekten:
+erzeugt werden, wobei die Fabrikmethode Argumente in String Form auflöst (z.B. "'line-width = 4"' -\textgreater  Integer 4 wird aufgelöst und anhand des Attributnamens an der richtigen Stelle im Konstruktor platziert) und der eigentliche Konstruktor nur aufgelöste Werte als Argumente akzeptiert.
+Das oben beschriebene Prinzip, der Aufteilung der Parserlogik in mehrere kleine Parser, wird konsequent durchgeführt. So haben eigene Datentypen wie z.B. \textit{GradientAlignment} ebenfalls kleine Parsereinheiten in ihren \textit{Companion Objekten}:
 \begin{lstlisting}[style=scala]
 sealed abstract class GradientAlignment private ()
   case object HORIZONTAL extends GradientAlignment
@@ -161,11 +161,11 @@ object GradientAlignment {
     }
   }
 }
-\end{lstlisting} Um sicherzustellen, dass auf eigene Faust keine Modellklasse erzeugt werden kann, wird der Konstruktor auf \textit{private} gesetzt und die Klasse mit \textit{sealed} gekennzeichnet. So ist es ausschließlich über das companion Objekt möglich eine Modellklasse zu erzeugen. Dem companion Objekt ist der Zugriff auf den privaten Konstruktor möglich, da es Zugriff auf alle privaten Member der companion Klasse hat. Ansonsten könnten im schlimmsten Fall sogar abstrakte Klassen anonym instanziiert werden:
+\end{lstlisting} Um sicherzustellen, dass auf eigene Faust keine Modellklasse erzeugt werden kann, wird der Konstruktor auf \textit{private} gesetzt und die Klasse mit \textit{sealed} gekennzeichnet. So ist es ausschließlich über das \textit{Companion Objekt} möglich eine Modellklasse zu erzeugen. Dem \textit{Companion Objekt} ist der Zugriff auf den privaten Konstruktor möglich, da es Zugriff auf alle privaten Member der \textit{Companion Klasse} hat. Ansonsten könnten im schlimmsten Fall sogar abstrakte Klassen anonym instantiiert werden:
 \begin{lstlisting}[style=scala, aboveskip=0pt]
 val gradient_alignment = new GradientAlignment(){}
 \end{lstlisting}
-\textit{sealed} verhindert, dass die gekennzeichnete Klasse außerhalb ihrer Quelldatei erweitert werden kann. So wäre es erneut möglich die Klasse um eine Ecke selber zu instanziieren:
+Das Schlüsselwort \textit{sealed} verhindert, dass die gekennzeichnete Klasse außerhalb ihrer Quelldatei erweitert werden kann. So wäre es erneut möglich die Klasse um eine Ecke selber zu instantiieren:
 \begin{lstlisting}[style=scala]
 class AnotherGradient extends GradientAlignment
 
@@ -173,14 +173,14 @@ class AnotherGradient extends GradientAlignment
  
 val anonymous_gradient = new AnotherGradient()
 \end{lstlisting}
-Da davon ausgegangen werden kann, dass die Modellklassen nur über geparsten Input erstellt werden können, ist es sicherer auch ihre Instanziierung \textbf{ausschließlich} den Parsern zu überlassen. Deshalb sollten alle Modellklassen auf diese Weise definiert werden.
+Da davon ausgegangen werden kann, dass die Modellklassen nur über geparsten Input erstellt werden können, ist es sicherer auch ihre Instantiierung \textbf{ausschließlich} den Parsern zu überlassen. Deshalb sollten alle Modellklassen auf diese Weise definiert werden.
 
 \subsection{Problematik der rekursiven regulären Ausdrücke}
-Das tatsächliche Parsen der Strings, erfolgte zunächst über reguläre Ausdrücke. Warum dies in der Umsetzung scheitert und wie das Problem zu lösen ist, wird in diesem Abschnitt erläutert. Zunächst erscheint es einleuchtend die Strings über \textit{Regular Expressions} einzulesen und auszuwerten. Ist die zugrundeliegende Grammatik simpel genug, funktioniert dies auch einwandfrei. Simple \textit{match}-funktionen lassen sich in Scala sehr viel komfortabler anwenden als beispielsweise in Java. Als einfaches Beispiel:
+Das tatsächliche Parsen der Strings, erfolgte zunächst über reguläre Ausdrücke. Warum dies in der Umsetzung scheitert und wie das Problem zu lösen ist, wird in diesem Abschnitt erläutert. Zunächst erscheint es einleuchtend die Strings über \textit{Regular Expressions} einzulesen und auszuwerten. Ist die zugrundeliegende Grammatik simpel genug, funktioniert dies auch einwandfrei. Simple \textit{match}-Funktionen lassen sich in Scala sehr viel komfortabler anwenden als beispielsweise in Java. Als einfaches Beispiel:
 \begin{lstlisting}[style=scala]
 "type identifier { val a = 10 }".matches("type [a-z]+
     \\{ (val [a-z]+ = [0-9]+)* \\}"
-\end{lstlisting}Nun wurde zunächst der Styleparser komplett und fehlerfrei fertig gestellt. Die bestehende Lösung definierte viele undurchsichtige Regeln, nicht zuletzt da komplexe reguläre Ausdrücke einfach nicht schön zu lesen sind. Entsprechend ist die Skalierbarkeit einer solchen Lösung nicht sehr effizient, da um eine ohnehin schon komplexe Regel zu erweitern, erst einmal die bestehende Regel verstanden werden muss. Dies kann einige Zeit in Anspruch nehmen. Beim erstellen der Regeln für die Shape Klassen stießen die regulären Ausdrücke endgültig an ihre Grenzen. Vor Allem die Anforderung der DSL, ineinander geschachtelte geometrische Figuren abbilden zu können, ist mit regulären Ausdrücken nicht machbar. Eine Shape definition wie:
+\end{lstlisting}Nun wurde zunächst der Style Parser komplett und fehlerfrei fertig gestellt. Die bestehende Lösung definierte viele undurchsichtige Regeln, nicht zuletzt da komplexe reguläre Ausdrück einfach nicht schön zu lesen sind. Entsprechend ist die Skalierbarkeit einer solchen Lösung nicht sehr effizient, da um eine ohnehin schon komplexe Regel zu erweitern, erst einmal die bestehende Regel verstanden werden muss. Dies kann einige Zeit in Anspruch nehmen. Beim erstellen der Regeln für die Shape Klassen stießen die regulären Ausdrücke endgültig an ihre Grenzen. Vor Allem die Anforderung der \textit{DSL}, ineinander geschachtelte geometrische Figuren abbilden zu können, ist mit regulären Ausdrücken nicht machbar. Eine Shape Definition wie:
 \begin{lstlisting}[style=spray]
 shape <identifier> {
     ellipse {
@@ -190,7 +190,7 @@ shape <identifier> {
         }
     }
 }
-\end{lstlisting} Ist einerseits sehr komplex, da man um sie parsen zu können sehr komplizierten und unschönen Code erzeugen muss. Das Problem ist, dass beim Parsen zwar ein size Attribute ermittelt werden kann, die Zuweisung zur richtigen Ellipse aber höchstens auf einer Indexvariable basieren könnte. Das weitaus größere Problem ist,
+\end{lstlisting} Ist einerseits sehr komplex, da man um sie parsen zu können sehr komplizierten und unschönen Code erzeugen muss. Das Problem ist, dass beim Parsen zwar ein "`size(width=50, height=50)"' Attribute ermittelt werden kann, die Zuweisung zur richtigen Ellipse aber höchstens auf einer Indexvariable basieren könnte. Das weitaus größere Problem ist,
 dass normale reguläre Ausdrücke an komplexen Ausdrücken scheitern, da Scala (Stand Version 2.11.7) keine rekursiven regulären Ausdrücke unterstützt. Setzt die Grammatik also voraus, dass ein Element \textbf{beliebig} oft in sich selbst gekapselt werden kann (wird zum Beispiel eine Grammatik beschrieben mit der russische Babuschka Puppen beschrieben werden können),
 \begin{lstlisting}[style=scala, aboveskip=0pt]
 Babuschka {
@@ -200,13 +200,13 @@ Babuschka {
 }
 \end{lstlisting}sind reguläre Ausdrücke dem Problem nicht mehr gewachsen.
 In diesem Fall muss auf eine komplexere Technologie zurückgegriffen werden.
-\subsection{Lösung Parser Combinators}Hierbei bieten sich die \textit{Parser Combinator} Klassen an. Wie der Name schon vermuten lässt, kann man hier Parser zusammenschalten, um so komplexe Ausdrücke auswerten zu können. Hierfür werden Methoden definiert, welche als Rückgabewert einen \textit{Parser$[$T$]$} liefern. Für \textit{Parser} sind (u.a.) die Methoden \textit{~}, \textit{~>} und \textit{<~} angegeben, welche sich wie normale Operatoren anfühlen und verwenden lassen. 
+\subsection{Lösung Parser Combinators}Hierbei bieten sich die \textit{Parser Combinator} Klassen an. Wie der Name schon vermuten lässt, kann man hier Parser zusammenschalten, um so komplexe Ausdrücke auswerten zu können. Hierfür werden Methoden definiert, welche als Rückgabewert einen \textit{Parser$[$T$]$} liefern. Für \textit{Parser} sind unter anderem die Methoden \textit{$\sim$}, \textit{$\sim$\textgreater} und \textit{\textless$\sim$} angegeben, welche sich wie normale Operatoren anfühlen und verwenden lassen. Braun hat dies in seinem Werk \textit{SCALA Objektfunktionale Programmierung} wie folgt einleuchtend erklärt (\citet[p. 182]{braun:scala}):
 \begin{itemize}
 \item \textit{a} $\sim$ \textit{b} erzeugt einen Parser, der zuerst a, dann mit b parst und das Gesamtergebnis zurückgibt.  
 \item \textit{a} $\sim$\textgreater \textit{b} parst genauso wie \textit{a} $\sim$ \textit{b}, gibt aber nur das Ergebnis des Parsers \textit{a} zurück.
 \item \textit{a} \textless$\sim$ \textit{b} gibt analog nur das Ergebnis von \textit{b} zurück. 
-\end{itemize}(vgl. \citet[p. 182]{braun:scala}) Zunächst ein einfaches Beispiel (in der interaktiven scala REPL):
-\begin{lstlisting}[style=scala]
+\end{itemize}Zunächst ein einfaches Beispiel in der interaktiven scala \textit{REPL} (siehe Listing \ref{lst:simpleparserexample}), in dem ein Parser namens \textit{NameParser} erstellt wird. Für diesen wird eine Methode \textit{name} definiert, welche aus einem String "`hello my name is \textless name \textgreater"' den entsprechenden Name filtert und zurück liefert.
+\begin{lstlisting}[style=scala, caption={Einfaches Beispiel für einen Namens Parser}, label = {lst:simpleparserexample}]
 scala> import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.JavaTokenParsers
 scala> class NameParser extends JavaTokenParsers {
@@ -217,8 +217,8 @@ scala> val p =new NameParser()
 p: NameParser = NameParser@2ecaa79e
 scala> p.parse(p.name, "hello my name is Julian")
 res0: p.ParseResult[String] = [1.24] parsed: Julian
-\end{lstlisting}Mit relativ wenig Aufwand können sogar sehr komplexe Grammatiken beschrieben werden:
-\begin{lstlisting}[style=scala]
+\end{lstlisting}Mit relativ wenig Aufwand können sogar sehr komplexe Grammatiken beschrieben werden (siehe Listing \ref{lst:babuschkaexample}).
+\begin{lstlisting}[style=scala, caption={Einfaches Beispiel zum Parsen einer rekursiven Grammatik}, label = {lst:babuschkaexample}]
 scala> import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.JavaTokenParsers
 scala> class BabuschkaParser extends JavaTokenParsers{
@@ -229,8 +229,8 @@ scala> val p = new BabuschkaParser()
 p: BabuschkaParser = BabuschkaParser@23a1ef14
 scala> p.parse(p.babuschka, "babuschka b1{ babuschka b2 {babuschka b3 {babuschka b4{}}}}")
 res3: p.ParseResult[String] = [1.36] parsed: (b1~(b2~(b3~(b4~))))
-\end{lstlisting}Umgesetzt wurden so beispielsweise die Rekursiven \textit{GeometricModels}- Geometrische Formen - welche in sich gekapselt erzeugt werden können:
-\begin{lstlisting}[style=scala]
+\end{lstlisting}Umgesetzt wurden so beispielsweise die rekursiven \textit{GeometricModels}- geometrische Figuren - welche in sich gekapselt erzeugt werden können (siehe Listing \ref{lst:geometricmodel}).
+\begin{lstlisting}[style=scala, caption={Rekursive Methode zum Parsen geometrischer Figuren}, label = {lst:geometricmodel}]
 private def geoModel: Parser[GeoModel] =
     geoIdentifier ~
     ((("style" ~> ident)?) <~ "{") ~
@@ -255,22 +255,22 @@ def arguments: Parser[String] =
     argument_classic | argument_advanced_explicit | 
     argument_advanced_implicit | argument_wrapped
 \end{lstlisting}
-Es wird also zunächst definiert, dass beim Parsen von Attributen ein \textit{attributePair} erwartet wird. Dieses attributePair besteht aus einer \textit{variable} und (\textasciitilde) \textit{arguments}. Eine Variable wird in der nächsten Regel bzw. Methode definiert.
+Es wird also zunächst definiert, dass beim Parsen von Attributen ein \textit{attributePair} erwartet wird. Dieses \textit{attributePair} besteht aus einer \textit{variable} und (\textasciitilde) \textit{arguments}. Eine Variable wird in der nächsten Regel bzw. Methode definiert.
 Die vielen verschiedenen Möglichkeiten den Variablenwert zu ermitteln führt darauf zurück, dass dieser Teil nun eben sehr variabel ist. An dieser Stelle kann jeder dem System bekannte Datentyp folgen. Während ein \textit{argument\_classic} erwartet, dass ein '=' Zeichen und anschließend irgendein Int, double oder String folgt, deckt ein \textit{argument\_advanced\_explicit} die Möglichkeit eines Arguments in folgender Form:
 \begin{lstlisting}[style=scala, aboveskip=0pt]
 someSize ( width = 10, height = 12)
-\end{lstlisting}Da diese und weitere Parserregeln öfter gebraucht werden, sind diese in einem Trait namens \textit{CommonParserMethods} zusammengefasst. Die companion Objekte der Modellklassen, die gleichzeitig den Parser bilden erweitern diesen Trait.
+\end{lstlisting}Da diese und weitere Parserregeln öfter gebraucht werden, sind diese in einem Trait namens \textit{CommonParserMethods} zusammengefasst. Die \textit{Companion Objekte} der Modellklassen, die gleichzeitig den Parser bilden, erweitern diesen Trait.
 Blickt man zurück auf \textit{attributePair}, sieht man außerdem, dass diese Methode ein \textit{Tupel} zurück gibt, welches eben zum einen den Variablennamen und außerdem den Wert zurückliefert.
-Da An dieser Stelle des Parsers noch keiner der Werte in seinen eigentlichen Typ konvertiert wird, kann nun auch ein einheitlich typisiertes Set an Tupel[String, String] an die tiefer liegenden Parser weitergegeben werden.
-Wird also gerade beispielsweise ein Style geparsed, werden die erhaltenen Tupel nun an das companion Objekt \textbf{Style} übergeben, welches sich selber um seine Attribute zu kümmern hat.
-Bisher wurde also nur darauf geachtet, dass der Inputstring möglichst mit keiner Konvention der zugrundeliegenden Grammatik bricht, außerdem wird so ein einheitliches Medium garantiert, nach dem sich die spezialisierten Parser der Modellklassen richten können. Da diese grundlegenden Regeln noch keinen abstrakten Syntaxbaum bilden, sondern nur dem Identifizieren der einzelnen Wörter der DSL dient bildet diese logische Einheit (\textit{SprayParser.scala}) den \textit{Lexer} der Anwendung (vgl. \citet{parsing}).
+Da an dieser Stelle des Parsers noch keiner der Werte in seinen eigentlichen Typ konvertiert wird, kann nun auch ein einheitlich typisiertes Set an Tupel[String, String] an die tiefer liegenden Parser weitergegeben werden.
+Wird also gerade beispielsweise ein Style geparsed, werden die erhaltenen Tupel nun an das \textit{Companion Objekt} \textit{Style} übergeben, welches sich selber um seine Attribute zu kümmern hat.
+Bisher wurde also nur darauf geachtet, dass der Inputstring möglichst mit keiner Konvention der zugrundeliegenden Grammatik bricht, außerdem wird so ein einheitliches Medium garantiert, nach dem sich die spezialisierten Parser der Modellklassen richten können. Da diese grundlegenden Regeln noch keinen \textit{abstrakten Syntaxbaum} (AST) bilden, sondern nur dem Identifizieren der einzelnen Wörter der \textit{DSL} dient, bildet diese logische Einheit (\textit{SprayParser.scala}) den \textit{Lexer} der Anwendung (vgl. \citet{parsing}).
 Da sich die spezialisierten Parser nun ihr Inputformat teilen, können sie folglich auch mit denselben Methoden weiterarbeiten.
 So muss das Rad nicht für jeden Parser neu erfunden werden.
-Ab jetzt passiert im spezialisierten Styleparser die eigentliche Magie.
-Bevor die übergebenen Werte in den Tupeln nun ihre endgültige Form erhalten, widmen sich die Factorys zunächst der Vererbung. Dazu mehr in \ref{sectionInheritance}.
+Ab jetzt passiert im spezialisierten Style Parser die eigentliche Magie.
+Bevor die übergebenen Werte in den Tupeln nun ihre endgültige Form erhalten, widmen sich die \textit{Factorys} zunächst der Vererbung. Dazu mehr in Abschnitt \ref{sectionInheritance}.
 Nachdem die vererbten Werte berücksichtigt sind, werden nun die Tupel mit den Attributen auseinandergenommen und vordefinierten Variablen zugewiesen, welche später an den Konstruktor der Modellklasse weitergegeben werden.
-Die Factory erhält also ein Set mit Attributen. Diese Attribute sind in Form eines Tupels[String, String] und enthalten jeweils den Namen des zuzuweisenden Feldes und den Attributswert(aber immer in String Form). Um Die Werte aufzulösen und zuzuweisen, wird eine mächtige Technik namens \textit{Pattern Matching} eingesetzt.
-\begin{lstlisting}[style=scala]
+Die Factory erhält also ein Set mit Attributen. Diese Attribute sind in Form eines Tupels[String, String] und enthalten jeweils den Namen des zuzuweisenden Feldes und den Attributswert(aber immer in String Form). Um Die Werte aufzulösen und zuzuweisen, wird eine mächtige Technik namens \textit{Pattern Matching} eingesetzt (siehe Listing \ref{lst:patternmatching}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus dem Code zum Pattern Matching}, label = {lst:patternmatching}]
 attributes.foreach{
     case ("description", x) => 
     	description = Some(x)
@@ -281,8 +281,8 @@ attributes.foreach{
     ...
 }
 \end{lstlisting}
-So wird immer zunächst geprüft um welches Feld es sich handelt. Anschließend wird der String falls nötig auf den gewünschten Typ konvertiert und zugewiesen. Da Fehleingaben wie Buchstaben an Stelle einer erwarteten Zahl möglich sind, wird über eine Hilfsmethode \textit{ifValid} sichergestellt, dass es nicht zum Programmabsturz kommt, sondern im Fehlerfall ein Defaultwert eingesetzt wird.
-\begin{lstlisting}[style=scala]
+So wird immer zunächst geprüft um welches Feld es sich handelt. Anschließend wird der String falls nötig auf den gewünschten Typ konvertiert und zugewiesen. Da Fehleingaben wie Buchstaben an Stelle einer erwarteten Zahl möglich sind, wird über eine Hilfsmethode \textit{ifValid} (siehe Listing \ref{lst:ifValid}) sichergestellt, dass es nicht zum Programmabsturz kommt, sondern im Fehlerfall ein Defaultwert eingesetzt wird.
+\begin{lstlisting}[style=scala, caption = {Auszug aus dem Code Methode ifValid}, label = {lst:ifValid}]
 def ifValid[T](f: => T):Option[T] = {
       var ret:Option[T] = None
       try { ret = Some(f)
@@ -291,14 +291,14 @@ def ifValid[T](f: => T):Option[T] = {
         ret
       }
 }
-\end{lstlisting}\textit{ifValid} erwartet einen Typparamter und einen Codeblock, der ein Ergebnis entsprechend des Typparameters zurückliefert. Der gewünschte Codeblock wird in einer sicheren \textit{try} umgebung ausgeführt. Bei erfolgreicher Ausführung wird das Ergebnis des Codeblocks zurückgeliefert, ansonsten \textit{None}.
+\end{lstlisting}Die Methode \textit{ifValid} erwartet einen Typparamter und einen Codeblock, der ein Ergebnis entsprechend des Typparameters zurückliefert. Der gewünschte Codeblock wird in einer sicheren \textit{try} Umgebung ausgeführt. Bei erfolgreicher Ausführung wird das Ergebnis des Codeblocks zurückgeliefert, ansonsten \textit{None}.
 Der Aufruf von \textit{ifValid} kann wie man sieht, aber sogar ohne Typparameter erfolgen, da Scala diesen auch hier anhand der Zuweisung erkennen kann und ihn inferiert (Scala ist klasse!).
 Im Falle der Styles werden größtenteils nur primitive Datentypen geparsed, daher ist das konvertieren der Werte in die eigentlichen Datentypen auch eher einfach.
-Im Falle der Shape Modellklasse werden unter anderem mehrere ineinander gekapselte geometrische Formen geparsed. Beim Parsen der Ellipsen, Rechtecke etc. sind mehrere Parser beteiligt. Beim Pattern Matching des Shape companion Objekts wird daher in der Regel auf weitere spezialisiertere Parser verwiesen.
+Im Falle der Shape Modellklasse werden unter anderem mehrere ineinander gekapselte geometrische Formen geparsed. Beim Parsen der Ellipsen, Rechtecke etc. sind mehrere Parser beteiligt. Beim \textit{Pattern Matching }des Shape \textit{Companion Objekts} wird daher in der Regel auf weitere spezialisiertere Parser verwiesen.
 
 
 \section{Vererbung}\label{sectionInheritance}
-Da Styles und Shapes auch mit einem \textit{extends} Schlüsselwort definiert werden können, muss auch ein Mechanismus vorhanden sein, der sich um die Vererbungshierarchie kümmert und die Werte der erweiterten Klassen abrufen kann.
+Da Styles und Shapes auch mit einem \textit{extends} Schlüsselwort definiert werden können, muss auch ein Mechanismus vorhanden sein, der sich um die Vererbungshierarchie kümmert und die Felder der erweiterten Klassen abrufen kann.
 Bisher wurde die Vererbung über eine Referenz zum Elternknoten geregelt. Wenn also ein gefragter Wert in der aktuellen Klasse nicht gefunden wurde, suchte man rekursiv in den Elternklassen danach.
 Dies erfordert nun einerseits bei größeren Hierarchien einige Zeit, außerdem eventuell komplizierte rekursive Funktionen.
 Ein leichterer und performanterer Weg wurde darin gefunden, die Werte eines Elternknotens direkt beim Erzeugen der neuen Instanz auf das Kind zu übertragen.
@@ -312,13 +312,13 @@ style B extends A {
     transparency = 0.5
 }
 \end{lstlisting}
-Nun werden die beiden Definitionen dem Parser übergeben, der die Attribute filtert und an spezialisierte Parser weiter gibt. In dem \textit{Companion Object} von Style, in dem die Attribute für einen neuen Style aufgelöst werden, wird nun zuerst die Liste an Eltern erstellt.
-\begin{lstlisting}[style=scala]
-val extendedStyle = parents.getOrElse(List()).foldLeft(List[Style]())((styles, s_name) =>
+Nun werden die beiden Definitionen dem Parser übergeben, der die Attribute filtert und an spezialisierte Parser weiter gibt. In dem \textit{Companion Objekt} von Style, in dem die Attribute für einen neuen Style aufgelöst werden, wird nun zuerst die Liste an Eltern erstellt (siehe Listing \ref{lst:extendedstyle}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code sammeln der Elterninstanzen}, label = {lst:extendedstyle}]
+val extendedStyle:List[Style] = parents.getOrElse(List()).foldLeft(List[Style]())((styles, s_name) =>
       if(cache.styleHierarchy.contains(s_name.trim)) s_name.trim :: styles else styles)
-\end{lstlisting}Dafür wird in der vom Parser mitgegebenen \textit{ClassHierarchy} (\textit{styleHierarchy}) nach den Namen der Eltern gesucht.
-Anschließend werden die verschiedenen Variablen, die später an den Konstruktor übergeben werden wie folgt vordefiniert:
-\begin{lstlisting}[style=scala]
+\end{lstlisting}Dafür wird in der vom Parser mitgegebenen \textit{ClassHierarchy} (\textit{styleHierarchy}) nach den Namen der Eltern gesucht (wieso hierbei die \textit{ClassHierarchy} Instanz nicht angesprochen werden muss und warum der Liste aus Styles augenscheinlich immer nur Strings zugewiesen werden wird später erklärt).
+Anschließend werden die verschiedenen Variablen, die später an den Konstruktor übergeben werden vordefiniert (siehe Listing \ref{lst:relevant}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Zuweisung der Felder der Elternelemente}, label = {lst:relevant}]
 var description:Option[String]=relevant{_.description}
 var transparency:Option[Double]=relevant{_.transparency} 
 var background_color:Option[ColorOrGradient]=relevant{_.background_color}
@@ -330,8 +330,8 @@ var font_name:Option[String]=relevant{_.font_name}
 var font_size:Option[Int]=relevant{_.font_size}
 var font_bold:Option[Boolean]=relevant{_.font_bold}
 var font_italic:Option[Boolean]=relevant{_.font_italic}
-\end{lstlisting}Auffällig ist hierbei, dass die Zuweisungen beinahe auch für nicht Programmierer lesbar sind. Wie zum Beispiel die erste Zuweisung des obigen Codeausschnitts: \textit{"'Weise der description die relevante bestehende description zu"'}. Hinter diesem Aufruf verbirgt sich eine Funktion, die in ClassHierarchy definiert wurde, um einfach auf die Attribute der Elternklasse zugreifen zu können.
-\begin{lstlisting}[style=scala]
+\end{lstlisting}Auffällig ist hierbei, dass die Zuweisungen beinahe auch für nicht Programmierer lesbar sind. Wie zum Beispiel die erste Zuweisung in Listing \ref{lst:relevant}: \textit{"'Weise der description die relevante bestehende description zu"'}. Hinter diesem Aufruf verbirgt sich eine Funktion, die in \textit{ClassHierarchy} definiert wurde, um einfach auf die Attribute der Elternklasse zugreifen zu können (siehe Listing \ref{lst:mostrelevant}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Funktion mostRelevant}, label = {lst:mostrelevant}]
 def mostRelevant[T, C](stack:List[C])(getter: C => Option[T]):Option[T] = {
     for (parent <- stack) {
       if(getter(parent).isDefined)
@@ -339,28 +339,28 @@ def mostRelevant[T, C](stack:List[C])(getter: C => Option[T]):Option[T] = {
     }
     None
 }
-\end{lstlisting}\textit{mostRelevant} macht gebruach von mehreren nützlichen Eigenschaften von Scala. Zunächst wir die Funktion mit Typparametern beschrieben. Was diese jeweils beschreiben sollen wird gleich klar. Sinn und Zweck der \textit{mostRelevant} Funktion ist es dem Benutzer zu ermöglichen, einen generischen \textit{getter} auf beliebige Felder der Oberklassen zu bieten. Sowohl Style als auch Shape führen eine Liste mit den Instanzen, die sie erweitern.
+\end{lstlisting}Die Methode \textit{mostRelevant} macht Gebrauch von mehreren nützlichen Eigenschaften von Scala. Zunächst wir die Funktion mit Typparametern beschrieben. Was diese jeweils beschreiben sollen wird gleich klar. Sinn und Zweck der \textit{mostRelevant} Funktion ist es dem Benutzer zu ermöglichen, einen generischen \textit{getter} auf beliebige Felder der Oberklassen zu bieten. Sowohl Style als auch Shape führen eine Liste mit den Instanzen, die sie erweitern.
 Genauer, führen Style und Shape eine Art \textit{Stack}, denn bei der Vererbung soll hier das \textit{latest-Bound-Principle} gelten. Dieser Stack wird als erster Parameter übergeben.
-Als nächstes sieht man eine weitere ParameterListe, die eine anonyme Funktion erwartet. Da die Funktion komplett typunabhängig funktionieren soll, wurden Typparameter benutzt. C stellt in diesem Fall den Typ der Modellklasse dar, T hingegen ist der Typ des gewünschten Elternattributs. Die anonyme Funktion bildet eine Modellklasse (C) auf den gewünschten Typ (T) ab und ist somit als Getter zu verstehen. 
+Als nächstes sieht man eine weitere Parameterliste, die eine Funktion erwartet. Da die Funktion komplett typunabhängig funktionieren soll, wurden Typparameter benutzt. C stellt in diesem Fall den Typ der Modellklasse dar, T hingegen ist der Typ des gewünschten Elternattributs. Die anonyme Funktion bildet eine Modellklasse (C) auf den gewünschten Typ (T) ab und ist somit als \textit{Getter} Methode zu verstehen. 
 Die Funktion iteriert also über die Elternklassen, wobei die Relevanz beziehungsweise die Priorität vom ersten Element der Liste, bis zum Letzten absteigend ist.
 Da alle Felder der Modellklassen \textit{Options} sind, kann nun für jede Superklasse geprüft werden, ob das gewünschte Feld definiert ist. Dieses gewünschte Feld wird wiederum über die mitgelieferte Funktion ermittelt. Wird in Keiner der Elternklassen ein passendes Feld gefunden, wird \textit{None} zurückgegeben. 
-Da der zweite Parameter in einer eigenen Parameterliste angegeben ist, kann das entsprechende Argument anstatt in runden Klammern, in eckigen Klammern angegeben werden und fügt sich somit wie eine neue Kontrollstruktur in den Code ein.
-Momentan müsste ein Aufruf aus dem Style companion Objekt wie folgt aussehen:
+Da der zweite Parameter in einer eigenen Parameterliste angegeben ist, kann das entsprechende Argument anstatt in runden, in geschweiften Klammern angegeben werden und fügt sich somit wie eine neue Kontrollstruktur in den Code ein.
+Momentan müsste ein Aufruf aus dem Style \textit{Companion Objekt} wie folgt aussehen:
 \begin{lstlisting}[style=scala]
 var description: Option[String] = 
     ClassHierarchy.mostRelevant(extendedStyle){ _.description }
-\end{lstlisting}Um selbst diesen Aufruf noch zu verkürzen wird sich einfach einer weiteren Hilfsmethode, namens \textit{relevant} bedient:
-\begin{lstlisting}[style=scala]
+\end{lstlisting}Um selbst diesen Aufruf noch zu verkürzen wird sich einfach einer weiteren Hilfsmethode, namens \textit{relevant} bedient (siehe Listing \ref{lst:defrelevant}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Hilfsfunktion relevant}, label = {lst:defrelevant}]
 def relevant[T](f: Style => Option[T]) =
     ClassHierarchy.mostRelevant(extendedStyle) {f}
-\end{lstlisting}Diese setzt die Elternliste schon einmal voraus und erwartet ab hier nur noch eine Funktion, welche aus einem Style element ein beliebiges T extrahiert.
+\end{lstlisting}Diese setzt die Elternliste schon einmal voraus und erwartet ab hier nur noch eine Funktion, welche aus einem Style Element ein beliebiges T extrahiert.
 Selbst jetzt müsste der Aufruf eigentlich noch wie folgt aussehen:
 \begin{lstlisting}[style=scala]
 var description: Option[String] = relevant[String]{ _.description }
 \end{lstlisting}Doch auch hier kann Scala den Typparameter selbst ermitteln und inferieren. Somit reduziert sich das Abrufen des am meisten relevanten Feldes eines beliebigen Typs einer Elternklasse auf den Aufruf:
 \begin{lstlisting}[style=scala]
 var description: Option[String] = relevant{ _.description }
-\end{lstlisting}Da Scala Funktionen als \textit{First-Class Objects} behandelt werden, können sie eben auch als Argumente vergeben werden \citet[p. 244]{esser:scala}. In Sprachen, in denen Funktionen anders behandelt werden wie zum Beispiel Java, wäre dies so nicht möglich. Um bei der Stylegenerierung den Wert einer Elternklasse für das gewünschte Feld zu ermitteln, müsste dort für jedes einzelne Attribut eine eigene Funktion erstellt werden. Diese iteriert durch die Elternklassen und führt dann eine nicht variable eindeutige Getterfunktion aus. Scala kommt hier mit einer einzigen Funktion und einer weiteren Hilfsfunktion (relevant), welche nur dem Komfort dient, aus.
+\end{lstlisting}Da Scala Funktionen als \textit{First-Class Objects} behandelt werden, können sie eben auch als Argumente vergeben werden (vgl. \citet[p. 244]{esser:scala}). In Sprachen, in denen Funktionen anders behandelt werden wie zum Beispiel Java, wäre dies so nicht möglich. Um bei der Stylegenerierung den Wert einer Elternklasse für das gewünschte Feld zu ermitteln, müsste dort für jedes einzelne Attribut eine eigene Funktion erstellt werden. Diese iteriert durch die Elternklassen und führt dann eine nicht variable eindeutige \textit{Getter} Methode aus. Scala kommt hier mit einer einzigen Funktion und einer weiteren Hilfsfunktion (relevant), welche nur dem Komfort dient, aus.
 
 \subsection{Vererbung bei Shapes}\label{shapeinheritance}Die Vererbungslogik hat sich bisher allgemein auf alle Felder der Modellklassen bezogen. Im Falle einer erweiterten Shape, sind zunächst zwei Fragen prinzipiell zu klären:
 \begin{itemize}
@@ -368,14 +368,14 @@ var description: Option[String] = relevant{ _.description }
 \item Werden geometrische Figuren an geometrische Figuren oder an Shapes vererbt?
 \end{itemize}
 \subsubsection{Referenzierung oder tiefe Kopie geerbter Felder?}\label{referenceorclone}
-Eine Referenzierung der geerbten geometrischen Figuren wäre natürlich wünschenswert, da insbesondere große geschachtelte Bäume aus geometrischen Figuren sehr viel speicherschonender behandelt werden würden. Gefahrlos umsetzen lässt sich dies aber nur wenn garantiert wird, dass eben jene geometrischen Figuren konstant sind.
-Der Ansatz ist natürlich alle Shape Member über ein \textbf{val}, also konstant zu definieren. Dies setzt jedoch voraus, dass die Anforderung einer späteren Änderung der Felder trotz der Shape vererbung nicht nötig ist. Daraus ergibt sich die nächste Frage.
+Eine Referenzierung der geerbten geometrischen Figuren ist \linebreak wünschenswert, da insbesondere große geschachtelte Bäume aus geometrischen Figuren sehr viel speicherschonender behandelt werden würden. Gefahrlos umsetzen lässt sich dies aber nur wenn garantiert wird, dass eben jene geometrischen Figuren immutabel sind.
+Der Ansatz ist, alle Shape Member über ein \textit{val}, also konstant zu definieren. Dies setzt jedoch voraus, dass die Anforderung einer späteren Änderung der Felder trotz der Shape Vererbung nicht nötig ist. Daraus ergibt sich die nächste Frage.
 \subsubsection{Geerbte geometrische Figuren}
-Wird beispielsweise also ein Shape A definiert, welche eine geometrische Figur enthält
+Wird beispielsweise also ein Shape A definiert, die eine geometrische Figur enthält
 \begin{lstlisting}[style=scala]
 shape A { rectangle{...}}
 \end{lstlisting}
-und wird nun eine Shape B definiert, welche selber eine geometrische Figur enthält und zusätzlich Shape A erweitert,
+und wird nun eine Shape B definiert, die selber eine geometrische Figur enthält und zusätzlich Shape A erweitert,
 \begin{lstlisting}[style=scala]
 shape B extends A { ellipse {...}}
 \end{lstlisting}so ergeben sich nun zwei Möglichkeiten, die Shapevererbung umzusetzen:\linebreak
@@ -394,9 +394,9 @@ shape B extends A {
     ellipse{...}
     rectangle{...}
 }
-\end{lstlisting}Würde die Shapevererbung bedeuten, dass die bereits bestehenden geometrischen Figuren z.B. ausgehend von der Tiefe erweitert werden (Möglichkeit 1), würde dies ebenso bedeuten, dass geometrische Figuren auch nach ihrer Erzeugung verändert werden können müssen. Damit wären sie nicht immutabel und könnten nicht gefahrlos referenziert werden. Ergo wäre die Speicherauslastung höher. Möglichkeit zwei schlägt vor, vererbte geometrische Figuren als seperaten Baum in die neu erzeugte Shape einzufügen. Die im Beispiel beschriebene Ellipse würde nicht nachträglich verändert werden müssen und kann somit als immutabel definiert werden. Nun reicht eine einfache Referenz auf die vererbten Felder und senkt die Speicherauslastung.
+\end{lstlisting}Würde die Shapevererbung bedeuten, dass die bereits bestehenden geometrischen Figuren z.B. ausgehend von der Tiefe erweitert werden (Möglichkeit 1), würde dies ebenso bedeuten, dass geometrische Figuren auch nach ihrer Erzeugung verändert werden können müssen. Damit wären sie nicht immutabel und könnten nicht gefahrlos referenziert werden. Ergo wäre die Speicherauslastung höher. Möglichkeit zwei schlägt vor, vererbte geometrische Figuren als separaten Baum in die neu erzeugte Shape einzufügen. Die im Beispiel beschriebene Ellipse wird dabei nicht nachträglich verändert und kann somit als immutabel definiert werden. Nun reicht eine einfache Referenz auf die vererbten Felder und senkt die Speicherauslastung.
 \subsection{Transitivität der Styleeigenschaften}\label{transitivestyle}
-Eine wichtige Anforderung an die Objektstruktur ist, dass Styleinformationen in Shapes an die beinhalteten geometrischen Figuren weiter gegeben werden. So wird erreicht, dass geometrische Figuren mit gleichen Farb-, Font- und anderen Eigenschaften erstellt werden. Wenn also einer Shape A ein Style S zugewiesen wird und ferner, A einen Baum aus geometrischen Figuren enthält
+Eine wichtige Anforderung an die Objektstruktur ist, dass Styleinformationen in Shapes an die beinhalteten geometrischen Figuren weitergegeben werden. So wird erreicht, dass geometrische Figuren mit gleichen Farb-, Font- und anderen Eigenschaften erstellt werden. Wenn also einer Shape A ein Style S zugewiesen wird und ferner, A einen Baum aus geometrischen Figuren enthält
 \begin{lstlisting}[style=scala]
 rectangle{
     ellipse{
@@ -406,9 +406,9 @@ rectangle{
 }
 \end{lstlisting}muss gewährleistet werden, dass sowohl rectangle, ellipse, line und polygon über die selben Styleinformationen von S verfügen, wie ihr Eltern Shape A.
 Dabei hört es noch nicht auf, denn sollte nun die beschriebene Ellipse ebenfalls einen Style (S1) zugeordnet bekommen, so müssen nun rectangle und line über die Styleinformationen von S verfügen. Ellipse und alle seine Kinder müssten hingegen sowohl über die von S, als auch über die von S1 etc. verfügen.
-Dabei hört es ebenfalls noch nicht auf. Denn entgegen einer Stylereferenz, ist es geometrischen Figuren außerdem auch möglich einen anonymen Style innerhalb ihres Scopes zu definieren. Durch diesen anonymen Style, werden die vorherigen Styleinformationen jedoch \textbf{nicht} revidiert, sondern wenn überhaupt erweitert. Es muss also aufgepasst werden, dass Styleinformationen in die Tiefe weitergegeben werden und dabei von tieferen Styles, ob anonym oder nicht, gegebenenfalls erweitert werden.
-Ein vereinfachtes Beispiel demonstriert anhand zweier vordefinierter Styles und einer Shape mit mehreren geometrischen Figuren was gemeint ist:
-\begin{lstlisting}[style=scala]
+Dabei hört es ebenfalls noch nicht auf. Denn entgegen einer Stylereferenz, ist es geometrischen Figuren außerdem auch möglich einen anonymen Style innerhalb ihres Scopes zu definieren. Durch diesen anonymen Style, werden die vorherigen Styleinformationen jedoch \textbf{nicht} revidiert, sondern wenn überhaupt erweitert. Es ist also zu beachten, dass Styleinformationen in die Tiefe weitergegeben werden und dabei von tieferen Styles, ob anonym oder nicht, gegebenenfalls erweitert werden.
+Ein vereinfachtes Beispiel demonstriert anhand zweier vordefinierter Styles und einer Shape mit mehreren geometrischen Figuren was gemeint ist (siehe Listing \ref{lst:transitiveexample}).
+\begin{lstlisting}[style=spray, caption = {Beispiel zur Verdeutlichung transitiver Styleeigenschaften}, label = {lst:transitiveexample}]
 style S1 {
     color = blue
 }
@@ -428,7 +428,7 @@ shape A style S1 {
         }
     }
 }
-\end{lstlisting}Diese Definitionen fertig umgesetzt also aussehen wie \ref{transitiveStyleExample}
+\end{lstlisting}Diese Definitionen sieht fertig umgesetzt aus wie in Abbildung \ref{transitiveStyleExample}.
 \begin{figure}[H]
 \begin{center}
 \includegraphics[scale = 0.5]{Bilder/transitiveStyle.png}
@@ -437,22 +437,22 @@ shape A style S1 {
 \end{center}
 \end{figure}
 In \ref{transitiveStyleExample} ist zu sehen, dass die Ellipse die Farbeigenschaften des äußeren Rechtecks übernimmt, das innere Rechteck, jedoch sowohl seine eigene Farbeigenschaft (rot) definiert und außerdem die Transparenz aus S2 umgesetzt ist.
-Bei der Vererbung wurde bisher wie bereits erwähnt darauf geachtet, Felder der Superklassen direkt bei der Erzeugung der neuen Instanzen weiter zu geben, um rekursives Suchen der entsprechenden Attribute in Listen zu vermeiden. Ebenso sind hier die Prinzipien der transitiven Styleeigenschaften über Vererbung gelöst und auch in diesem Fall wird darauf verzichtet nur Referenzen zu speichern, über die Elternknoten erreicht werden können.
-Die Parserregel für ein \textit{GeometricModel} beziehungsweise dessen "'Skizze"' dem GeoModel erkennt anonyme Styles während dem Parsen. Da Anonyme Styles \textbf{keine} Informationen über Elternpaare besitzen zu brauchen, werden sie direkt instanziiert und in einem Cache hinterlegt. Der Attributesliste des entsprechenden GeoModel wird lediglich der Name des anonymen Styles mitgegeben (ja, der anonyme Style bekommt intern einen generierten Namen, den der Benutzer nicht kennt). So kann weiterhin das einheitliche Medium einer Argumentenliste aus Strings an die Factorys weitergegeben werden. Die entsprechende Factory löst das Argument schlussendlich über den Namen auf und erhält wieder die eigentliche Styleinstanz.
+Bei der Vererbung wurde bisher wie bereits erwähnt darauf geachtet, Felder der Superklassen direkt bei der Erzeugung der neuen Instanzen weiterzugeben, um rekursives Suchen der entsprechenden Attribute in Bäumen zu vermeiden. Ebenso sind hier die Prinzipien der transitiven Style-Eigenschaften über Vererbung gelöst und auch in diesem Fall wird darauf verzichtet nur Referenzen zu speichern, über die Elternknoten erreicht werden können.
+Die Parserregel für ein \textit{GeometricModel} beziehungsweise dessen "'Skizze"' dem \textit{GeoModel} erkennt anonyme Styles während dem Parsen. Da anonyme Styles \textbf{keine} Informationen über Elternpaare besitzen müssen, werden sie direkt instantiiert und in einem Cache hinterlegt. Der Attributsliste des entsprechenden \textit{GeoModel} wird lediglich der Name des anonymen Styles mitgegeben (tatsächlich bekommt der anonyme Style intern einen generierten Namen, den der Benutzer nicht kennt). So kann weiterhin das einheitliche Medium einer Argumentenliste aus String Tupeln an die Factorys weitergegeben werden. Die entsprechende Factory löst das Argument schlussendlich über den Namen auf und erhält wieder die eigentliche Styleinstanz.
 Styles werden wie andere Attribute auch in den entsprechenden Parserklassen aufgelöst und an die Konstruktoren der Modellklassen weitergegeben.
-Am Beispiel des \textit{CommonLayout}s wird deutlich wie die Stylevererbung funktioniert.
-Wie die anderen Parser auch, erzeugt das \textit{CommonLayout} zuerst Variablen, welche ausgehend von geparster und geerbter Information initialisiert und später an den Konstruktor überreicht wird. Für den Styleparameter erzeugt das \textit{Commonlayout} also zunächst:
+Am Beispiel des \textit{CommonLayouts} wird deutlich wie die Style Vererbung funktioniert.
+Wie die anderen Parser auch, erzeugt das \textit{CommonLayout} zuerst Variablen, welche ausgehend von geparster und geerbter Information initialisiert und später an den Konstruktor überreicht werden. Für den Styleparameter erzeugt das \textit{CommonLayout} also zunächst:
 \begin{lstlisting}[style=scala]
-var styl:Option[Style] = Style.makeLove(cache, parentStyle, geoModel.style)
+var styl:Option[Style] = Style.generateChildStyle(cache, parentStyle, geoModel.style)
 \end{lstlisting}
-Hier ist zu sehen wie die Styleinformationen der nächst höheren Instanz und der eigenen Stylereferenz ausgewertet werden. Mehr zu der Funktion \textit{makeLove} im weiteren Verlauf beschrieben. Wird unter den Attributen nun beim Pattern Matching ein String gefunden, auf den ein Style abgebildet werden kann, handelt es sich um einen anonymen Style, der ebenfalls in die bestehenden Styleinformationen eingearbeitet wird.
-\begin{lstlisting}[style=scala]
+Hier ist zu sehen wie die Styleinformationen der nächst höheren Instanz und der eigenen Style Referenz ausgewertet werden. Mehr zu der Funktion \textit{generateChildStyle} im weiteren Verlauf. Wird unter den Attributen nun beim \textit{Pattern Matching} ein String gefunden, auf den ein Style abgebildet werden kann, handelt es sich um einen anonymen Style, der ebenfalls in die bestehenden Styleinformationen eingearbeitet wird (siehe Listing \ref{lst:caseanonymousstyle}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Erzeugen von Kindstyles}, label = {lst:caseanonymousstyle}]
 case anonymousStyle:String if cache.styleHierarchy.contains(anonymousStyle) =>
-        styl = Style.makeLove(cache, styl, Some(anonymousStyle))
-\end{lstlisting}Was genau macht nun \textit{makeLove}?
-MakeLove ist eine Funktion des Style companion Objektes und wird wie folgt definiert.
-\begin{lstlisting}[style=scala]
-def makeLove(cache: Cache, parents:Option[Style]*):Option[Style] ={
+        styl = Style.generateChildStyle(cache, styl, Some(anonymousStyle))
+\end{lstlisting}Was genau macht nun \textit{generateChildStyle}?
+\textit{generateChildStyle} ist eine Funktion des Style \textit{Companion Objektes} und wird wie folgt definiert:
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Funktion generateChildStyle}]
+def generateChildStyle(cache: Cache, parents:Option[Style]*):Option[Style] ={
     val parentStyles = parents.filter(_.isDefined)
     if(parentStyles.length == 1) return parentStyles.head
     else if(parentStyles.isEmpty) return None
@@ -460,11 +460,11 @@ def makeLove(cache: Cache, parents:Option[Style]*):Option[Style] ={
         "(child_of -> "+parentStyles.map( p => p.get.name+{if(p != parentStyles.last)" & "else ""}).mkString+")"
     Some(Style(childName, Some(parentStyles.toList.map(i => i.get.name)), List[(String, String)](), cache))
 }
-\end{lstlisting}Die Funktion erwartet eine variable Anzahl an Styles (Scala erlaubt diese \textit{varargs} durch die Kennzeichnung *), prüft anschließend, ob es sich um gültige Argumente handelt. Im Falle, dass mehr als ein gültiges Argument unter den Eltern ist, wird ein \textbf{neuer} Style über die Factory erzeugt, der die entsprechenden Elternteile mitbekommt. Die Stylefactory kümmert sich nun wieder darum, die Felder des neuen Styles anhand des \textit{latest Bound Prinzips} zu erben, wodurch ein neuer "'Kind"' Style entsteht.\linebreak
+\end{lstlisting}Die Funktion erwartet eine variable Anzahl an Styles (Scala erlaubt diese \textit{varargs} durch die Kennzeichnung *), prüft anschließend, ob es sich um gültige Argumente handelt. Im Falle, dass mehr als ein gültiges Argument unter den Eltern ist, wird ein \textbf{neuer} Style über die Factory erzeugt, der die entsprechenden Elternteile mitbekommt. Die Style Factory kümmert sich nun wieder darum, die Felder des neuen Styles anhand des \textit{latest Bound Prinzips} zu erben, wodurch ein neuer "'Kind"' Style entsteht.
 Im Folgenden wird nun ein weiteres Problem adressiert.
-\subsection{Modell und Skizze; Problematik der Instanziierungsreihenfolge}\label{skizze}
-Über Style, Connection und Shape  ist es möglich in der Definition des allumfassenden Diagrams ebenfalls eine Stylereferenz anzugeben. Effektiv soll hierduch ein \textit{Corporate Design} realisiert werden können, welches sämtliche Eigenschaften an unterliegende Connections, Shapes und somit auch geometrische Figuren überträgt, \citet[3 Approach]{gerhart:modigen_concept}. Um wie bereits beschrieben die Möglichkeit zu bieten, die Modellklassen in Zukunft parallelisiert bearbeiten zu können, wurden alle Attribute der Modellklassen als \textit{vals} gekennzeichnet und sind somit Konstant. So können ruhigen Gewissens funktionale Programmierparadigmen darauf angewendet werden und entsprechender Code kann hoch parallel arbeiten. Entsprechend ist es nicht möglich eine (beispielsweise) Shape zu erzeugen, anschließend ein Diagram zu erstellen, das auf die bereits fertige Shape referenziert und ihr somit nachträglich Styleinformationen übertragen zu wollen. Die Shape ist ja bereits erstellt und alle Felder, inklusive der Styleinformationen, sind bereits aufgelöst. Hier wird nun die selbe Taktik angewandt, wie zuvor bei den geometrischen Figuren \ref{example}. Da die Erzeugung der Shapeinstanzen folglich erst erfolgen darf, wenn mögliche Corporate Styleinformationen bereits gegeben sind, werden Shapes zunächst über eine Methode namens \textit{shapeSketch} geparsed.\textit{ShapeSketch} sammelt für eine angehende Shape, wie das \textit{GeoModel} für angehende \textit{GeometricModel}s alle geparsten Informationen, löst diese aber noch \textbf{nicht} auf. Beim Einlesen eines Diagrams, werden sowohl Style als auch Shape referenziert. Erst also wenn alle nötigen Informationen vorhanden sind, wird während des Parsing Prozesses des Diagrams die Shape Skizze(\textit{ShapeSketch}) mit dem Corporate Style zu der eigentlichen Shape aufgelöst. Hierfür verfügt die \textit{ShapeSketch} Klasse über eine Methode namens \textit{toShape}, die die gespeicherten Attribute an die Shape Factory übergibt. So erzeugte "'Skizzen"' sind somit nur Container um angehende Modellklassen zu einem beliebigen Zeitpunkt auflösen zu können.
-\begin{lstlisting}[style=scala]
+\subsection{Modell und Skizze; Problematik der Instantiierungsreihenfolge}\label{skizze}
+Über Style, Connection und Shape  ist es möglich in der Definition des allumfassenden Diagrams ebenfalls eine Style Referenz anzugeben. Effektiv soll hierdurch ein \textit{Corporate Design} realisiert werden können, welches sämtliche Eigenschaften an unterliegende Connections, Shapes und somit auch geometrische Figuren überträgt, \citet[3 Approach]{gerhart:modigen_concept}. Um wie bereits beschrieben die Möglichkeit zu bieten, die Modellklassen in Zukunft parallelisiert bearbeiten zu können, wurden alle Attribute der Modellklassen als \textit{vals} gekennzeichnet und sind somit Konstant. So können ruhigen Gewissens funktionale Programmierparadigmen darauf angewendet werden und entsprechender Code kann hoch parallel arbeiten. Entsprechend ist es nicht möglich eine (beispielsweise) Shape zu erzeugen, anschließend ein Diagram zu erstellen, das auf die bereits fertige Shape referenziert und ihr somit nachträglich Styleinformationen übertragen zu wollen. Die Shape ist ja bereits erstellt und alle Felder, inklusive der Styleinformationen, sind bereits aufgelöst. Hier wird nun die selbe Taktik angewandt, wie zuvor bei den geometrischen Figuren \ref{example}. Da die Erzeugung der Shape Instanzen folglich erst erfolgen darf, wenn mögliche Corporate Styleinformationen bereits gegeben sind, werden Shapes zunächst über eine Methode namens \textit{shapeSketch} geparsed. \textit{ShapeSketch} sammelt für eine angehende Shape, wie das \textit{GeoModel} für angehende \textit{GeometricModels} alle geparsten Informationen, löst diese aber noch \textbf{nicht} auf. Beim Einlesen eines Diagrams, werden sowohl Style als auch Shape referenziert. Erst also wenn alle nötigen Informationen vorhanden sind, wird während des Parsing Prozesses des Diagrams die Shape Skizze(\textit{ShapeSketch}) mit dem Corporate Style zu der eigentlichen Shape aufgelöst. Hierfür verfügt die \textit{ShapeSketch} Klasse über eine Methode namens \textit{toShape}, die die gespeicherten Attribute an die Shape Factory übergibt. So erzeugte "'Skizzen"' sind somit nur Container um angehende Modellklassen zu einem beliebigen Zeitpunkt auflösen zu können (siehe Listing \ref{lst:shapesketch}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Definition der ShapeSketch container Klasse}, label = {lst:shapesketch}]
 case class ShapeSketch(name:String,
                        parents:Option[List[String]],
                        style:Option[Style],
@@ -474,16 +474,16 @@ case class ShapeSketch(name:String,
                        anch:Option[String],
                        cache: Cache){
   def toShape(corporateStyle:Option[Style]) = 
-      Shape(name, parents, Style.makeLove(cache, corporateStyle, style),
+      Shape(name, parents, Style.generateChildStyle(cache, corporateStyle, style),
             attrs, geos, descr, anch, cache)
 }
-\end{lstlisting}Außerdem wird der nun vorhandene Corporate Style und der Style der Shape, über die bereits vorgestellte Funktion \textit{Style.makeLove} kombiniert. Da der Corporate Style auf diese Weise ganz oben in der Shape eingesetzt wird, verteilt er sich wie bereits beschrieben (siehe \ref{transitivestyle}) automatisch auf die unterliegenden geometrischen Formen, da die entsprechenden Factorys die überliegenden Styleinstanzen analysiert und entsprechend erweitert. Das Problem der Erzeugungsreihenfolge zieht sich durch das gesamte Projekt. Die Abhängigkeit zu Styleinstanzen lässt es nicht zu, irgendeine Modellklasse vor dem Diagram zu erzeugen, da Styleinformationen bis hin zum Diagram immer erweitert werden können.
+\end{lstlisting}Außerdem wird der nun vorhandene Corporate Style und der Style der Shape, über die bereits vorgestellte Funktion \textit{Style.generateChildStyle} kombiniert. Da der Corporate Style auf diese Weise ganz oben in der Shape eingesetzt wird, verteilt er sich wie bereits beschrieben (siehe \ref{transitivestyle}) automatisch auf die unterliegenden geometrischen Formen, da die entsprechenden Factorys die überliegenden Style Instanzen analysiert und entsprechend erweitert. Das Problem der Erzeugungsreihenfolge zieht sich durch das gesamte Projekt. Die Abhängigkeit zu Style Instanzen lässt es nicht zu, irgendeine Modellklasse vor dem Diagram zu erzeugen, da Styleinformationen bis hin zum Diagram immer erweitert werden können.
 Folglich ist es zwingend erforderlich für sämtliche Modellklassen, die von Style abhängen, Container zu erstellen, die die unaufgelösten Attribute der Modellklasse beinhalten und es ermöglichen die Erzeugung der eigentlichen Instanz auf einen späteren Zeitpunkt zu verschieben. So findet sich zu jeder Modellklasse und jeder Hilfsklasse, die von Style abhängt, eine entsprechende Containerklasse, die mit \textit{Sketch} gekennzeichnet ist:
 \begin{description}
 \item[Diagram] Node und NodeSketch; Edge und EdgeSketch
 \item[Shape] Shape und ShapeSketch; GeometricModel und GeoModel(einzige Ausnahme, endet nicht mit Sketch)
 \item[Connection] Connection und ConnectionSketch
-\end{description}Diese Lösung resultiert aus der Vorgabe, dass alle Felder der Modellklassen immutabel sein sollen und dem gewählten Lösungsweg, vererbte Eigenschaften bei der Objekterzeugung zu übergeben und nicht über Referenzen auf Elternelemente beim Aufrufzeitpunkt zu suchen. Der so gewonnene Vorteil während der Benutzung der Modelle mit besseren \textit{Response Times} rechnen zu können, da die Rekursivität des Problems aufgelöst wurde, wird also im Endeffekt durch einen zusätzlichen Overhead an Speicherauslastung wieder wet gemacht. Erzeugte Container/Skizzen können nach Auflösung zur entsprechenden Instanz der Modellklasse nämlich nicht verworfen und dem \textit{Garbage Collector} überlassen werden, da weitere Diagrams ebenfalls noch in der Lage sein müssen unberührte Skizzen der Modellklassen benutzen zu können. Die Klasse \textit{SprayParser} stellt die eigentliche Schnittstelle zum Parser dar. Sie enthält alle notwendigen Methoden um das Parsen eines Strings einzuleiten. 
+\end{description}Diese Lösung resultiert aus der Vorgabe, dass alle Felder der Modellklassen immutabel sein sollen und dem gewählten Lösungsweg, vererbte Eigenschaften bei der Objekterzeugung zu übergeben und nicht über Referenzen auf Elternelemente beim Aufrufzeitpunkt zu suchen. Der so gewonnene Vorteil während der Benutzung der Modelle mit besseren \textit{Response Times} rechnen zu können, da die Rekursivität des Problems aufgelöst wurde, wird also im Endeffekt durch einen zusätzlichen Overhead an Speicherauslastung wieder wett gemacht. Erzeugte Container/Skizzen können nach Auflösung zur entsprechenden Instanz der Modellklasse nämlich nicht verworfen und dem \textit{Garbage Collector} überlassen werden, da weitere Diagrams ebenfalls noch in der Lage sein müssen unberührte Skizzen der Modellklassen benutzen zu können. Die Klasse \textit{SprayParser} stellt die eigentliche Schnittstelle zum Parser dar. Sie enthält alle notwendigen Methoden um das Parsen eines Strings einzuleiten. 
 \begin{description}
 \item[parseStyle] Zum parsen von n Styles
 \item[parseShape] Zum parsen von n Shapes
@@ -493,7 +493,7 @@ Folglich ist es zwingend erforderlich für sämtliche Modellklassen, die von Sty
 \item[parseDiagram] Zum parsen von n Diagrams in einem String
 \end{description}
 Diverse weitere Methoden, sind privat um den SprayParser nach außen hin möglichst simpel und benutzerfreundlich zu gestalten.
-Wird eine Methode mit der Kennzeichnung \textit{Abstract} zum Parsen einer Shape oder Connection benutzt, werden tatsächliche Shape bzw. Connection Instanzen zurückgelifert, jedoch auch für diesen Prozess die entsprechenden Container Skizzen angelegt. Das dient dem Zweck, dass es für Diagrams auch möglich ist abstrakte Shapes zu referenzieren hat aber eine sehr wichtige Konsequenz. Referenziert ein Diagram eine abstrakte Shape (oder Connection), wird die entsprechende \textit{ShapeSketch} verwendet, damit corporate Styles beachtet werden können. Die bereits bestehende Shape Instanz wird im \textit{Cache} sodurch aber überschrieben, da der entsprechende Container neu umgewandelt wird und der bestehende Eintrag im Cache mit dem entsprechenden \textit{Key} (Name der Shape) überschrieben wird. Abstrakte Shapes sollten also nur dann von Diagrams referenziert werden, wenn absichtlich darauf verzichtet wird, dass Unterklassen der abstrakten Shape den corporate Style des Diagrams dadurch \textbf{nicht} implizit übernehmen. Deren Styleinformationen sind ja bereits aufgelöst und können wie bereits erklärt nicht nachträglich aktualisiert werden.
+Wird eine Methode mit der Kennzeichnung \textit{Abstract} zum Parsen einer Shape oder Connection benutzt, werden tatsächliche Shape bzw. Connection Instanzen zurückgeliefert, jedoch auch für diesen Prozess die entsprechenden Container Skizzen angelegt. Das dient dem Zweck, dass es für Diagrams auch möglich ist abstrakte Shapes zu referenzieren hat aber eine sehr wichtige Konsequenz. Referenziert ein Diagram eine abstrakte Shape (oder Connection), wird die entsprechende \textit{ShapeSketch} verwendet, damit corporate Styles beachtet werden können. Die bereits bestehende Shape Instanz wird im \textit{Cache} sodurch aber überschrieben, da der entsprechende Container neu umgewandelt wird und der bestehende Eintrag im Cache mit dem entsprechenden \textit{Key} (Name der Shape) überschrieben wird. Abstrakte Shapes sollten also nur dann von Diagrams referenziert werden, wenn absichtlich darauf verzichtet wird, dass Unterklassen der abstrakten Shape den corporate Style des Diagrams dadurch \textbf{nicht} implizit übernehmen. Deren Styleinformationen sind ja bereits aufgelöst und können wie bereits erklärt nicht nachträglich aktualisiert werden.
 Um dieses Prinzip zu verdeutlichen ein kleines Beispiel:\linebreak Es wird eine Shape \textit{A} definiert, welche einen bestimmten Style benutzt und als abstrakte Shape geparst wird.
 \begin{lstlisting}[style = scala, aboveskip=0pt]
 val abstractShape = """shape A style DefaultStyle{...}"""
@@ -515,10 +515,10 @@ parser.parseDiagram(diagram)
 val normalShape2 = """shape C extends A{...}"""
 parser.parseShape(normalShape2)
 \end{lstlisting}dann hat nun auch die Shape C die Styleinformationen von sowohl dem \textit{CorporateStyle} und dem \textit{DefaultStyle}, da die Shape, die sie referenziert von der Diagram Definitin neu erzeugt worden ist. Da abstrakte Shapes in der Regel nur erzeugt werden um tests mit Shapes durchzuführen, ohne ein Diagram erstellen zu müssen ist der beschriebene Fall normalerweise nicht von Belang, da Diagrams normalerweise auf keine abstrakte Shape verweisen sollten. Hier muss überlegt werden, ob sich aus dem Referenzieren von abstrakten Shapes ein zusätzlicher nützlicher Effekt ergeben kann, oder ob dadurch eher eine potenzielle Fehlerquelle eingeführt wird. Je nach dem muss über eine Prüfung verhindert werden, dass Shapeinstanzen überschrieben werden können.\linebreak Wird eine Shape bzw. Connection über \textit{parseShape} bzw. \textit{parseConnection}, also ohne die Abstract Kennzeichnung, geparst werden zunächst \textbf{keine} tatsächlichen Instanzen der Modellklassen erzeugt, sondern nur die der Container Klassen \textit{ShapeSketch} bzw. \textit{ConnectionSketch}. Jetzt erscheint es natürlich an dieser Stelle paradox, dass die Methoden mit der \textit{Abstract} Kennzeichnung tatsächliche Instanzen der Modellklassen erzeugen und die ohne \textit{Abstract} Kennzeichnung nur Container Klassen. Aus Anwendersicht ergibt dies schon mehr Sinn. Als Anwender definiere ich Shapes und Connections nämlich eigentlich nur dann, wenn ich sie später auch in einem Diagram referenziere. Mit anderen Worten sind die tatsächlich benutzten Shapes und Connections die, die über die Methoden \textit{parseShape} bzw. \textit{parseConnection} eingelesen werden. Shapes und Connections, die ich nur dafür einlesen will, um ähnliche Eigenschaften zusammenzufassen und durch Unterklassen zu diversifizieren (sinngemäß also abstrakt), werden über die Methoden \textit{parseAbstractShape} bzw. \textit{parseAbstractConnection} eingelesen.
-\subsubsection{Kritik an gewählter Taktik}Im Falle, dass mit Referenzen auf Styles der Elternobjekte gearbeitet werden würde, wäre es möglich die Styleinformationen der Elterninstanz und die eigenen erst zu erzeugen, wenn sie benötigt werden. So wäre kein Bedarf für die vorgestellten Container Klassen. Je nach dem wie tief die Vererbungshierarchie ist, würde dies jedoch beträchtliche Nachteile im Bezug auf die \textit{Responsetime} des später erzeugten graphischen Editors mit sich bringen. Die Skizzen Klassen zu den jeweiligen Modellklassen wurden in der \textit{SprayParser.scala} Datei definiert, da andere Parsingstrategien evtl nicht mehr abhängig von ihnen sind.
+\subsubsection{Kritik an gewählter Taktik}Im Falle, dass mit Referenzen auf Styles der Elternobjekte gearbeitet werden würde, wäre es möglich die Styleinformationen der Elterninstanz und die eigenen erst zu erzeugen, wenn sie benötigt werden. So bestünde kein Bedarf für die vorgestellten Container Klassen. Je nach dem wie tief die Vererbungshierarchie ist, würde dies jedoch beträchtliche Nachteile im Bezug auf die \textit{Responsetime} des später erzeugten graphischen Editors mit sich bringen. Die Skizzen Klassen zu den jeweiligen Modellklassen wurden in der \textit{SprayParser.scala} Datei definiert, da andere Parsingstrategien evtl nicht mehr abhängig von ihnen sind.
 \section{Ausführliches Beispiel}\label{example}
-Nun folgt ein ausführliches Beispiel anhand einer Shapedefinition, zur Verdeutlichung der Schritte, die beim Parsen einer Modellklasse, durchlaufen werden:
-\begin{lstlisting}[style=spray]
+Nun folgt ein ausführliches Beispiel anhand einer Shapedefinition(siehe Listing \ref{lst:exampleshapedefinition}), zur Verdeutlichung der Schritte, die beim Parsen einer Modellklasse, durchlaufen werden:
+\begin{lstlisting}[style=spray, caption = {Beispieldefinition für eine Shape}, label = {lst:exampleshapedefinition}]
 shape EClassShape style B{
     size-min (width=4, height=6)
     rectangle {
@@ -531,8 +531,8 @@ shape EClassShape style B{
         }
     }
 }
-\end{lstlisting}Soll eine Shapedefinition wie die obige eingelesen und direkt in eine Shapeinstanz umgewandelt werden, wird sie zunächst im \textbf{SprayParser} (der Standard Parserklasse) durch folgende Regeln/Parser überprüft:
-\begin{lstlisting}[style=scala]
+\end{lstlisting}Soll eine Shapedefinition wie \ref{lst:exampleshapedefinition} eingelesen und direkt in eine Shape Instanz umgewandelt werden, wird sie zunächst im \textbf{SprayParser} (der Standard Parserklasse) durch folgende Regeln/Parser überprüft:
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Methode zum Parsen einer Shape(Sketch)}, label = {lst:defshapesketch}]
 [ 1]private def shapeSketch:Parser[Shape] =
 [ 2]    ("shape" ~> ident) ~
 [ 3]    (("extends" ~> rep(("(?!style)".r ~> ident)<~ ",?".r))?) ~
@@ -545,13 +545,13 @@ shape EClassShape style B{
 [10]      case name ~ parent ~ style ~ attrs ~ geos ~ desc ~ anch =>
 [11]      ShapeSketch(name, parent, style, attrs, geos, desc, anch, cache) 
 [12]    }
-\end{lstlisting}Warum die Methode/Regel in Zeile 1 \textit{shapeSketch} heißt wurde in \ref{skizze} erklärt). Zeile 2 filtert den identifier, der Shape. Zeile 3 prüft auf eine optionale Angabe erweiterter Shapes. Hierbei dürfen diese nicht "`style"' heißen, da die Regel sonst verwirrt wäre, erwartet sie doch in Zeile 4 eine optionale Angabe für einen benutzten Style. Zeile 5 sucht nun \textit{n} mal nach einer Regel namens shapeAttribute
-\begin{lstlisting}[style=scala]
+\end{lstlisting}Warum die Methode/Regel in Zeile 1 \textit{shapeSketch} heißt wurde in Abschnitt \ref{skizze} erklärt). Zeile 2 filtert den identifier, der Shape. Zeile 3 prüft auf eine optionale Angabe erweiterter Shapes. Hierbei dürfen diese nicht "`style"' heißen, da die Regel sonst verwirrt wäre, erwartet sie doch in Zeile 4 eine optionale Angabe für einen benutzten Style. Zeile 5 sucht nun \textit{n} mal nach einer Regel namens shapeAttribute (siehe Listing \ref{lst:shapeattribute})
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Regeln zum Parsen der Felder}, label = {lst:shapeattribute}]
 private def shapeAttribute = shapeVariable ~ arguments ^^ {case v ~ a => (v, a)}
 private def shapeVariable = ("""("""+Shape.validShapeVariables.map(_+"|").mkString+""")""").r ^^ {_.toString}
-\end{lstlisting}\textit{validShapeVariables} ist eine Sammlung von Strings, welche die bekannten Felder einer Shape darstellen. Diese Sammlung wird zu einem regulären Ausdruck umgewandelt und unter der Regel \textit{shapeVariable} benutzt. Die Regel \textit{arguments} entstammt dem Trait \textit{CommonParserMethods}, welches jedem Parsr zur Verfügung stehet. So kann \textit{shapeAttribute} Tupel von Attribut \& Wert Paaren bilden. 
-Shapeattributes sind lediglich primitive Datentypen und daher nicht interessant weiterzuverfolgen. In Zeile 6 wird ebenfalls \textit{n} mal die Regel \textit{geoModel} angewandt, welche die einzelnen Regeln einer geometrischen Figur abbildet und ein Objekt zurückliefert, das als Container(\ref{skizze}) fungiert:
-\begin{lstlisting}[style=scala]
+\end{lstlisting}\textit{validShapeVariables} ist eine Sammlung von Strings, welche die bekannten Felder einer Shape darstellen. Diese Sammlung wird zu einem regulären Ausdruck umgewandelt und unter der Regel \textit{shapeVariable} benutzt. Die Regel \textit{arguments} entstammt dem Trait \textit{CommonParserMethods}, welches jedem Parser zur Verfügung steht. So kann \textit{shapeAttribute} Tupel von Attribut \& Wert Paaren bilden. 
+Shape Attribute sind lediglich primitive Datentypen und daher nicht interessant weiterzuverfolgen. In Zeile 6 von Listing \ref{lst:defshapesketch} wird ebenfalls \textit{n} mal die Regel \textit{geoModel} angewandt, welche die einzelnen Regeln einer geometrischen Figur abbildet und ein Objekt zurückliefert, das als Container(\ref{skizze}) fungiert (siehe Listing \ref{lst:defgeomodel}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Regel zum Parsen geometrischer Figuren}, label = {lst:defgeomodel}]
 private def geoModel: Parser[GeoModel] =
     geoIdentifier ~
     ((("style" ~> ident)?) <~ "{") ~
@@ -563,11 +563,11 @@ private def geoModel: Parser[GeoModel] =
     }
 \end{lstlisting}Hierbei werden nicht direkt Instanzen der eigentlich gewünschten \textit{GeometricModel} Klasse erzeugt, da es für die geometrischen Figuren zwingend erforderlich ist einerseits ihre entsprechende Eltern Shape Instanz zu kennen. Diese existiert zu diesem Zeitpunkt jedoch noch nicht. Außerdem müssen sie ihre Eltern \textit{GeometricModel} Instanzen kennen, welche ebenfalls erst erzeugt werden können, wenn ihre Kinder existieren. Alle Felder sollen ja konstanten sein und nicht nachträglich gesetzt werden. Diese Teufelsspirale wird gelöst, indem zunächst Container Objekte erstellt werden, die die Informationen speichern und umgewandelt werden, sobald ihre Abhängigkeiten geklärt sind. Sind alle Regeln überprüft worden und keine Fehleingaben oder fehlende Eingaben identifiziert worden, gibt es von nun an zwei Möglichkeiten weiter zu verfahren. Einer der Gründe, warum Container erstellt werden müssen wird in \ref{transitivestyle} erklärt. Wird der Container jetzt bereits der Fabrik für Shapes übergeben und somit eine fertige Shape Instanz erzeugt, können der Shape Instanz nachträglich \textbf{keine} weiteren Informationen mehr gegeben werden.
 Wird die Shape bereits jetzt erzeugt, existiert sie zwar als valide Shape, ist aber nun mehr als abstrakte Shape zu betrachten, da neue Shapes sie zwar erweitern können, sie aber nicht selber in einer Diagram Instanz referenziert wird, denn das Diagramm würde versuchen nachträglich Styleinformationen in die Shape einzuarbeiten. Hierzu mehr in \ref{skizze}. Um die Bearbeitungsschritte einer Shape zu verdeutlichen reicht es hier, den Container, welcher die Information der angehenden Shape enthält, nun direkt an die Shape Fabrik (das \textit{Companion Object} der Shape Klasse) zu übergeben. Wie man in Zeile 11 sieht, wird beim Parsen einer Shape der Container ShapeSketch zurückgeliefert.
-Um entweder zu Testzwecken, oder um eine abstrakte Shape zu erzeugen kann ein String mit Shapedefinition deshalb über die Methode \textit{abstractShape} geparsed werden:
-\begin{lstlisting}[style=scala]
+Um entweder zu Testzwecken, oder um eine abstrakte Shape zu erzeugen kann ein String mit Shapedefinition deshalb über die Methode \textit{abstractShape} geparsed werden (siehe Listing \ref{lst:defabstractshape}).
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Methode zum direkten Parsen von Shapes}, label = {lst:defabstractshape}]
 private def abstractShape:Parser[Shape] = shapeSketch ^^ {case sketch => sketch.toShape(None)}
-\end{lstlisting}Wie man sieht greift abstractShape auf die Regel/Methode \textit{shapeSketch} zurück, erzeugt jedoch anschließend direkt über \textit{ShapeSketch}'s Methode \textit{toShape}, welche lediglich ein Aufruf an die \textit{Shapefactory} weiterleitet, eine valide Shape. Ab dem Aufruf \textit{toShape} übernimmt der spezialisierte Shape Parser im \textit{Companion Object} der Shape Klasse das Ruder und bereitet die erhaltenen Argumente so auf, dass diese an den eigentlichen Shapekonstruktor weitergegeben werden können. Dabei werden zunächst die Superklassen aufgelöst und erweitert (siehe \ref{sectionInheritance}). Anschließend werden über ein Pattern Matching die erhaltenen Attribut \& Wert Tupel aufgelöst. Beispielsweise das \textit{"'size-min"'} Attribut, das zuvor in der beispielhaften Shapedefinition gegeben ist:
-\begin{lstlisting}[style=scala]
+\end{lstlisting}Wie man sieht greift \textit{abstractShape} auf die Regel/Methode \textit{shapeSketch} zurück, erzeugt jedoch anschließend direkt über \textit{ShapeSketch}'s Methode \textit{toShape}, welche lediglich ein Aufruf an die \textit{Shapefactory} weiterleitet, eine valide Shape. Ab dem Aufruf \textit{toShape} übernimmt der spezialisierte Shape Parser im \textit{Companion Objekt} der Shape Klasse das Ruder und bereitet die erhaltenen Argumente so auf, dass diese an den eigentlichen Shapekonstruktor weitergegeben werden können. Dabei werden zunächst die Superklassen aufgelöst und erweitert (siehe \ref{sectionInheritance}). Anschließend werden über ein Pattern Matching (siehe Listing \ref{lst:attributesforeach}) die erhaltenen Attribut- und Wert Tupel aufgelöst. Beispielsweise das \textit{"'size-min"'} Attribut, das zuvor in Listing \ref{lst:exampleshapedefinition} gegeben wurde. 
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Iterieren durch Attribute mit Pattern Matching}, label = {lst:attributesforeach}]
 attributes.foreach{
       case ("size-min", x) =>
         val opt = parse(width_height, x).get
@@ -576,40 +576,37 @@ attributes.foreach{
           size_height_min = Some(opt.get._2)
         }
         ...
-\end{lstlisting}Auch hierbei wird an weitere Regeln delegiert (z.B. \textit{width\_height}). Herausgefilterte Werte werden vordefinierten Variablen zugewiesen, welche später an den eigentlichen Konstruktor übergeben werden. Sind so alle Attribute der Shape aufgelöst wird der private Konstruktor der Shape companion Klasse aufgerufen. Es ist darauf zu achten, dass alle Felder der erweiterbaren Modellklasse Konstanten sind (siehe \ref{sectionInheritance}). Dazu müssen dem Shapekonstruktor die "'Skizzen"' (die Container) der geometrischen Figuren übergeben werden. \textit{GeometricModel(s)} sollen ebenfalls immutabel sein und müssen daher bereits bei ihrer Erzeugung ihre Eltern Shape kennen. Würden die geometrischen Figuren vor der Shape instanziierung erzeugt werden, müsste die Referenz auf die Eltern Shape nachgereicht  und die entsprechende Referenz als \textit{var} definiert werden.
-Da die Erzeugung der \textit{GeometricModel(s)} im Konstruktor erfolgt, kann die umschließende Shape über \textit{this} referenziert werden. Wir befinden uns also jetzt im privaten Konstruktor der Shape Modellklasse. Die wohl wichtigste Aufgabe des Shape Konstruktors ist es die geometrischen Figuren zu erzeugen. Hierbei muss der Konstruktor jedoch auch beachten, dass von einer möglichen Elternshape weitere geometrische Figuren geerbt werden können (siehe \ref{shapeinheritance}). Deshalb werden die geometrischen Figuren wie folgt aufgelöst:
-\begin{lstlisting}[style = scala]
-val shapes = {
-    val inherited_and_new_geometrics = parentShapes.getOrElse(List()) ::: parseGeometricModels(geos, style)
-    if(inherited_and_new_geometrics nonEmpty)Some(inherited_and_new_geometrics) else None
-  }
-\end{lstlisting}So werden die geometrischen Figuren der Eltern Shape und die neu geparsten in einer Liste zusammengefasst. Die hier benutzte Methode \textit{parseGeometricModels}, iteriert durch die Container der geometrischen Figuren und erzeugt vollwertige \textit{GeometricModel(s)}:
-\begin{lstlisting}[style = scala]
-private def parseGeometricModels(geoModels:List[GeoModel], parentStyle:Option[Style]) =
-    geoModels.map{_.parse(None, parentStyle)}.
-      foldLeft(List[GeometricModel]())((list, c:Option[GeometricModel])=>if(c.isDefined) c.get :: list else list)
-\end{lstlisting}Hier wird die \textit{parse} Methode der Container aufgerufen, welche anhand eines Matchings entscheidet um welches geometrisches Model es sich explizit handelt (z.B. Ellipse oder Rechteck etc.). Anhand dieses Matchings wird dann der spezialisierte Parser der vielen verschiedenen Klassen aufgerufen, die eine geometrische Figur beschreiben. Im Falle der obigen Beispielshape wurde ein Rechteck definiert, welches eine Ellise beinhaltet. Ab hier geht es also in der \textit{Rectangle Fabric} weiter (dem \textit{Companion Object} der Rectangle Klasse). Hier werden wie in allen anderen Parsern die mitgegebenen Attribute über ein Matching aufgelöst, wobei hierfür wieder evtl. auf weitere spezialisiertere Parser zurückgegriffen wird. Zum Beispiel wird das Rectangle seine Attribute an die Parser für das \textit{CommonLayout} und die \textit{CompartmentInfo} weitergeben. Erst wenn deren Fabrikmethoden valide Ergebnisse zurück liefern wird das Rechteck erzeugt. Der private Konstruktor der \textit{Rectanlge} Klasse bekommt wiederum den Container der im Beispiel beschriebenen Ellipse mit und so geht der Vorgang in der \textit{Ellipse Fabric} von vorne los. 
-\section{Cache}Bisher wurde bereits einige male erwähnt, dass sich Modellklassen untereinander referenzieren. Diese Referenzierungen können aber Aufgrund der Problematik der Instanziierungsreihenfolge nicht während des Parsingvorgangs erfolgen. Sonst würde auf Objekte verwiesen werden, die selber bereits erst in der Mache sind.
-Oder es geht schlicht um die Problematik, dass Styles und Shapes unabhängig voneinander definiert werden können, Shapes jedoch namentlich auf Styles verweisen. Selbst wenn es also nur darum geht Referenzen auf erstellte Styles zu behalten um sie nicht an den \textit{Garbage Collector} zu verlieren braucht es einen Mechanismus, der sich entsprechende Referenzen behält und wiederum bereitstellt. Da sich Diagrams, Shapes und Styles untereinander referenzieren können sollen, muss der Parser also in der Lage sein Instanzen zu erzeugen und gleichzeitig auch zu verwalten. Hierbei wurde stets darauf geachtet, dass der SprayParser keine statischen Zustände hält. Ausgehend davon, dass der Parser zukünftig in einer Multi-Client-fähigen Umgebung eingesetzt wird, ist so garantiert, dass sich verschiedene Clients niemals die selben Ressourcen teilen und somit eventuell inkonsistente Daten produzieren. Schon eine gemeinsame Abhängigkeit eines Namensraums wäre nicht wünschenswert, da Modellklassen mit gleichen Namen sonst je nach implementierung entweder Exceptions auslösen würden oder sich gegenseitig überschreiben könnten. Wenn aber keine statischen Zustände gehalten werden kann jeder Client mit einer eigenen SrpayParser Instanz kommunizieren. Außerdem kann so auf komplizierte synchronisationsmechanismen verzichtet werden. Es wird beispielsweise zunächst eine Shape geparsed, auf die ein Diagram verweisen soll. Jedoch kann das Diagram die Shape nicht referenzieren, wenn es die entsprechende Referenz gar nicht kennt. Um die Referenz auf die Shape also nicht zu verlieren, muss sie lokal gespeichert und über eine Eigenschaft erreichbar sein, welche dem Diagram (besser gesagt dem Benutzer) bekannt ist und möglichst eindeutig sein sollte. Hierfür bietet sich der Name der Shape an. Anstatt aber nun IDs in Form von Strings zu halten, sondern auf bestehende Objekte verweisen zu können, müssen die Instanzen der generierten Shapes usw. lokal in einer Map gesichert werden. Hierfür wurde eine Hilfsklasse \textit{Cache} erstellt, die Container für alle relevanten Datentypen bereitstellt. So können fertig instanziierte Objekte zwischengespeichert und bei Bedarf über die entsprechende Map der Cache Instanz referenziert werden.
+\end{lstlisting}Auch hierbei wird an weitere Regeln delegiert (z.B. \textit{width\_height}). Herausgefilterte Werte werden vordefinierten Variablen zugewiesen, welche später an den eigentlichen Konstruktor übergeben werden. Sind so alle Attribute der Shape aufgelöst wird der private Konstruktor der Shape companion Klasse aufgerufen. Es ist darauf zu achten, dass alle Felder der erweiterbaren Modellklasse Konstanten sind (siehe \ref{sectionInheritance}). Dazu müssen dem Shapekonstruktor die "'Skizzen"' (die Container) der geometrischen Figuren übergeben werden. \textit{GeometricModel(s)} sollen ebenfalls immutabel sein und müssen daher bereits bei ihrer Erzeugung ihre Eltern Shape kennen. Würden die geometrischen Figuren vor der Shape Instantiierung erzeugt werden, müsste die Referenz auf die Eltern Shape nachgereicht  und die entsprechende Referenz als \textit{var} definiert werden.
+Da die Erzeugung der \textit{GeometricModel(s)} im Konstruktor erfolgt, kann die umschließende Shape über \textit{this} referenziert werden. Wir befinden uns also jetzt im privaten Konstruktor der Shape Modellklasse. Die wohl wichtigste Aufgabe des Shape Konstruktors ist es die geometrischen Figuren zu erzeugen. Hierbei muss der Konstruktor jedoch auch beachten, dass von einer möglichen Elternshape weitere geometrische Figuren geerbt werden können (siehe Abschnitt \ref{shapeinheritance}). Deshalb werden die neu geparsten und die geerbten geometrischen Figuren zusammen in eine Liste \textit{gemerged}. Die hier benutzte Methode \textit{parseGeometricModels} (siehe Listing \ref{lst:parsegeometricmodels}), iteriert durch die Container der geometrischen Figuren und erzeugt vollwertige \textit{GeometricModel(s)}:
+\begin{lstlisting}[style = scala, caption = {Auszug aus Code Methode parseGeometricModels}, label = {lst:parsegeometricmodels}]
+private def parseGeometricModels
+(geoModels:List[GeoModel], parentStyle:Style) =
+    geoModels.foldLeft(List[GeometricModel]())((list, g) => {
+    	val newGeo = g.parse(None, parentStyle)
+    	if (newGeo isDefined) newGeo.get :: list else list
+    	})
+\end{lstlisting}In Listing \ref{lst:parsegeometricmodels} wird die \textit{parse} Methode der Container aufgerufen, welche anhand eines Matchings entscheidet um welche geometrische Figur es sich explizit handelt (z.B. Ellipse oder Rechteck etc.). Anhand dieses Matchings wird dann der spezialisierte Parser der vielen verschiedenen Klassen aufgerufen, die eine geometrische Figur beschreiben. Im Falle der obigen Beispielshape wurde ein Rechteck definiert, welches eine Ellise beinhaltet. Ab hier geht es also in der \textit{Rectangle Fabric} weiter (dem \textit{Companion Object} der Rectangle Klasse). Hier werden wie in allen anderen Parsern die mitgegebenen Attribute über ein Matching aufgelöst, wobei hierfür wieder evtl. auf weitere spezialisiertere Parser zurückgegriffen wird. Zum Beispiel wird das Rectangle seine Attribute an die Parser für das \textit{CommonLayout} und die \textit{CompartmentInfo} weitergeben. Erst wenn deren Fabrikmethoden valide Ergebnisse zurück liefern wird das Rechteck erzeugt. Der private Konstruktor der \textit{Rectanlge} Klasse bekommt wiederum den Container der im Beispiel beschriebenen Ellipse mit und so geht der Vorgang in der \textit{Ellipse Fabric} von vorne los. 
+\section{Cache}Bisher wurde bereits einige male erwähnt, dass sich Modellklassen untereinander referenzieren. Diese Referenzierungen können aber Aufgrund der Problematik der Instantiierungsreihenfolge nicht während des Parsingvorgangs erfolgen. Sonst würde auf Objekte verwiesen werden, die selber bereits erst in der Mache sind.
+Oder es geht schlicht um die Problematik, dass Styles und Shapes unabhängig voneinander definiert werden können, Shapes jedoch namentlich auf Styles verweisen. Selbst wenn es also nur darum geht Referenzen auf erstellte Styles zu behalten um sie nicht an den \textit{Garbage Collector} zu verlieren braucht es einen Mechanismus, der sich entsprechende Referenzen behält und wiederum bereitstellt. Da sich Diagrams, Shapes und Styles untereinander referenzieren können sollen, muss der Parser also in der Lage sein Instanzen zu erzeugen und gleichzeitig auch zu verwalten. Hierbei wurde stets darauf geachtet, dass der SprayParser keine statischen Zustände hält. Ausgehend davon, dass der Parser zukünftig in einer Multi-Client-fähigen Umgebung eingesetzt wird, ist so garantiert, dass sich verschiedene Clients niemals die selben Ressourcen teilen und somit eventuell inkonsistente Daten produzieren. Schon eine gemeinsame Abhängigkeit eines Namensraums wäre nicht wünschenswert, da Modellklassen mit gleichen Namen sonst je nach implementierung entweder Exceptions auslösen würden oder sich gegenseitig überschreiben könnten. Wenn aber keine statischen Zustände gehalten werden kann jeder Client mit einer eigenen SrpayParser Instanz kommunizieren. Außerdem kann so auf komplizierte synchronisationsmechanismen verzichtet werden. Es wird beispielsweise zunächst eine Shape geparsed, auf die ein Diagram verweisen soll. Jedoch kann das Diagram die Shape nicht referenzieren, wenn es die entsprechende Referenz gar nicht kennt. Um die Referenz auf die Shape also nicht zu verlieren, muss sie lokal gespeichert und über eine Eigenschaft erreichbar sein, welche dem Diagram (besser gesagt dem Benutzer) bekannt ist und möglichst eindeutig sein sollte. Hierfür bietet sich der Name der Shape an. Anstatt aber nun IDs in Form von Strings zu halten, sondern auf bestehende Objekte verweisen zu können, müssen die Instanzen der generierten Shapes usw. lokal in einer Map gesichert werden. Hierfür wurde eine Hilfsklasse \textit{Cache} erstellt, die Container für alle relevanten Datentypen bereitstellt. So können fertig instantiierte Objekte zwischengespeichert und bei Bedarf über die entsprechende Map der Cache Instanz referenziert werden.
 \subsection{Implicits}
 Hier wird Gebrauch von einer sehr mächtigen Eigenschaft von Scala gemacht, den \textbf{implicits}. Wenn man sich beispielsweise im Shapekonstruktor befindet und auf ein parentShape-element zugreifen will, bräuchte man normalerweise einen Aufruf wie den folgenden:
-\begin{lstlisting}[style=scala]
+\begin{lstlisting}[style=scala, aboveskip=0pt]
 val someShape:Shape =
 someCacheInstance.ContainerOfType[T].get("identifier").data
 \end{lstlisting}
 Oder weniger abstrakt:
-\begin{lstlisting}[style=scala]
+\begin{lstlisting}[style=scala, aboveskip=0pt]
 val someShape:Shape= cache.shapeHierarchy(parent_ID).data
 \end{lstlisting}
 Selbst Aufrufe, die wie im obigen Beispiel recht kurz ausfallen, zerstören die Lesbarkeit ohnehin schon komplexer Codezeilen. Scala erlaubt es \textit{implicits} zu definieren, welche u.a. implizite Typumwandlungen nach angegebener Methode durchführen können. Wenn in einem sogenannten \textit{package object} besagte implicits definiert werden, ist es sogar möglich das entsprechende package object in einer Quelldatei zu importieren und so die impliziten Definitionen überall in den gewünschten Scope zu bringen. Im Falle der häufig benutzten Cache Klasse, sehen Zugriffe auf den Cache nun wie folgt aus:
-\begin{lstlisting}[style=scala]
+\begin{lstlisting}[style=scala, aboveskip=0pt]
 val parentShape:Shape = parent_ID
 \end{lstlisting}
 \textit{parent\_ID} ist tatsächlich immernoch ein String, wird aber vom Compiler als unpassend erkannt, daraufhin sucht er nach einer impliziten Methode, welche in der Lage ist, den String in den gewünschten Typ (hier Shape) umzuwandeln. Der Programmierer, kann seine Cache-Instanz also sogar ohne explizit auf sie zugreifen zu müssen - eben implizit - benutzen. So kann man sich auf die wesentlichen Aspekte der Problemstellung konzentrieren. In diesem Fall ist die manuelle Typisierung der \textit{parentShape} Konstante allerdings zwingend, da der Compiler sonst eine valide Zuweisung eines Strings zu einer nicht typisierten Konstante feststellen würde und daraufhin den Typ String inferieren würde. Die entsprechende Definition des implicits im package object \textit{model.parser} sieht aus wie folgt:
-\begin{lstlisting}[style=scala]
+\begin{lstlisting}[style=scala, aboveskip=0pt]
 implicit def IDtoShape(id:String)(implicit c:Cache): Shape =
 c.shapeHierarchy(id).data
 \end{lstlisting}Die Umwandlung der mit implicit gekennzeichneten Funktion nimmt dem Programmierer nun den Zwischenschritt ab über die Cacheinstanz die richtige Collection ausfindig zu machen und den gewünschten String aufzulösen.
-Auffällig ist, dass gleich \textbf{zwei implicit}s vorkommen. Ersteres kennzeichnet die Methode für den Compiler, das zweite ist ein \textit{implicit parameter}. Da der besagte Cache pro Parserinstanz erzeugt wird um statische Bindungen prinzipiell vermeiden zu können, kann in der Methodendefinition im Grunde auf keine Cache-Instanz zugegriffen werden. Das liegt daran, dass der Compiler ja nicht implizit weiß, in welcher Cache-Instanz er nach der ID suchen soll. Genau das, wird dem Compiler durch das zweite implicit mitgeteilt. Man sagt ihm quasi: '\textit{Ich kennzeichne eine Cache-Instanz, nach der sollst du suchen}'. Diese zwei einfachen Tricks, verkürzen die Verschachtelung und steigern die Lesbarkeit des Codes. Zwar kann der Code für jemanden, der nicht weiß was implicits sind durchaus verwirrend aussehen, da wir der Shape variable eindeutig einen String zuweisen. Doch der Code selbst, liest sich beinahe wie pseudo Code und der eigentliche Sinn erschließt sich dadurch besser. Entgegen der \textit{dispatch} Kennzeichnung in Xtext, handelt es sich hierbei \textbf{nicht} um eine Art dynamische Erweiterung einer Klasse, sondern um eine implizite/automatisierte Typumwandlung. Anstatt also Methoden für einen Typ zu definieren, den dieser eigentlich garnicht besitzt, nur um ein Argument in der entsprechenden Parameterliste zu sparen, bleiben die Klassen hier konsistent. Im package object \textit{parser} sind so für alle collections, die der Cache benutzt implizite Typumwandlungen bereitgestellt. So bleibt der Cache bis auf wenige Ausnahmen vollkommen unsichtbar für den Entwickler (wenn gewünscht). Als weiteren Vorteil der implicits könnte die Entkopplung genannt werden. Wird beispielsweise entschieden, die aktuelle Style Modellklasse mit einer neuen Klassendefintion zu erweitern, so muss nur die implizite Umwandlung abgeändert werden und die Polymorphie erledigt den Rest. Da eine Erweiterung einer Klasse auch neue Eigenschaften und Methoden mit sich bringt fragt sich natürlich nun, was es bringt Instanzen der neuen Klasse auf Variablen zu initialisieren, deren Typ noch die Oberklasse hat. Immerhin können die neuen Methoden so nicht auf die neuen Instanzen angewandt werden, da sie ja nur als Superklassenelement angesprochen werden können. Allerdings kann hier wieder eine neue implizite Umwandlung abhelfen, die entweder ein implizites Casting oder ein erneutes Einleiten einer Suche nach dem passenden Element in einer Map vollzieht. Man sieht, dass so relativ leicht komplett neue Objektstrukturen auf unveränderte Codepassagen anwenden lassen können. Hier muss man jedoch vorsichtig sein. Denn wie schon Martin Odersky sagt, sind \textit{implicits} zwar unwahrscheinlich mächtig, "`sind die Implicit Geister jedoch einmal beschworen, sind sie schwer wieder los zu werden"'. %TODO suche nach zitat 
+Auffällig ist, dass gleich \textbf{zwei implicit}s vorkommen. Ersteres kennzeichnet die Methode für den Compiler, das zweite ist ein \textit{implicit parameter}. Da der besagte Cache pro Parserinstanz erzeugt wird um statische Bindungen prinzipiell vermeiden zu können, kann in der Methodendefinition im Grunde auf keine Cache-Instanz zugegriffen werden. Das liegt daran, dass der Compiler ja nicht implizit weiß, in welcher Cache-Instanz er nach der ID suchen soll. Genau das, wird dem Compiler durch das zweite implicit mitgeteilt. Man sagt ihm quasi: '\textit{Ich kennzeichne eine Cache-Instanz, nach der sollst du suchen}'. Diese zwei einfachen Tricks, verkürzen die Verschachtelung und steigern die Lesbarkeit des Codes. Zwar kann der Code für jemanden, der nicht weiß was implicits sind durchaus verwirrend aussehen, da wir der Shape variable eindeutig einen String zuweisen. Doch der Code selbst, liest sich beinahe wie pseudo Code und der eigentliche Sinn erschließt sich dadurch besser. Entgegen der \textit{dispatch} Kennzeichnung in Xtext, handelt es sich hierbei \textbf{nicht} um eine Art dynamische Erweiterung einer Klasse, sondern um eine implizite/automatisierte Typumwandlung. Anstatt also Methoden für einen Typ zu definieren, den dieser eigentlich garnicht besitzt, nur um ein Argument in der entsprechenden Parameterliste zu sparen, bleiben die Klassen hier konsistent. Im package object \textit{parser} sind so für alle collections, die der Cache benutzt implizite Typumwandlungen bereitgestellt. So bleibt der Cache bis auf wenige Ausnahmen vollkommen unsichtbar für den Entwickler (wenn gewünscht). Als weiteren Vorteil der implicits könnte die Entkopplung genannt werden. Wird beispielsweise entschieden, die aktuelle Style Modellklasse mit einer neuen Klassendefintion zu erweitern, so muss nur die implizite Umwandlung abgeändert werden und die Polymorphie erledigt den Rest. Da eine Erweiterung einer Klasse auch neue Eigenschaften und Methoden mit sich bringt fragt sich natürlich nun, was es bringt Instanzen der neuen Klasse auf Variablen zu initialisieren, deren Typ noch die Oberklasse hat. Immerhin können die neuen Methoden so nicht auf die neuen Instanzen angewandt werden, da sie ja nur als Superklassenelement angesprochen werden können. Allerdings kann hier wieder eine neue implizite Umwandlung abhelfen, die entweder ein implizites Casting oder ein erneutes Einleiten einer Suche nach dem passenden Element in einer Map vollzieht. Man sieht, dass so relativ leicht komplett neue Objektstrukturen auf unveränderte Codepassagen anwenden lassen können. Hier muss man jedoch vorsichtig sein. Denn wie schon Martin Odersky sagt, sind \textit{implicits} zwar unwahrscheinlich mächtig, "`\textit{sind die Implicit Geister jedoch einmal beschworen, sind sie schwer wieder los zu werden}"'. %TODO suche nach zitat 
 In diesem Fall müsste man also vorsichtig überlegen, ob diese Vorgehensweise der späteren Objektstruktur hilft oder sie eher undurchsichtig macht.
 

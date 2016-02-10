@@ -1,17 +1,54 @@
 \chapter{Fazit}
+Abschließend zu der Arbeit werden Probleme benannt, die während des Prozesses aufgekommen sind. Außerdem Wird zusammengefasst, was erreicht wurde, was evtl. versäumt wurde und welche Möglichkeiten sich in der Zukunft für das MoDiGen Projekt ergeben.
 \section{Probleme}
-Die Arbeit war sehr Zeitaufwendig, da die bestehende Objektstruktur, die durch die Xtext grammatik beschrieben wurde auf Scala bezogen gelegentlich keinen oder wenig Sinn machte. Hin und wieder wurden auch Fehler in der definierten DSL entdeckt. 
+Die Arbeit war sehr Zeitaufwendig, da die bestehende Objektstruktur, die durch die Xtext Grammatik beschrieben wurde auf Scala bezogen gelegentlich keinen oder wenig Sinn machte. Hin und wieder wurden auch Fehler in der definierten DSL entdeckt. 
 Da das Umsetzen einer DSL in Scala ausgehend von einer Xtext Grammatik voraussetzt, dass entsprechende Grammatik verstanden worden ist. Dauerte es außerdem eine Weile, bis alle Unklarheiten bezüglich der Grammatik beseitigt wurden. Hin und wieder machten sich Fehler erst lange Zeit später bemerkbar, so mussten ein paar male bestehende Klassen komplett neu überarbeitet werden. Auch Xtext Sprachkenntnisse waren nötig, da z.B. die Generatoren der Xtext Sprache sonst unklar erscheinen.
 Methodenaufrufe wie createColorValue, die wie in \ref{specialstyle} beschrieben worden sind,
-\begin{verbatim}
+\begin{lstlisting}[style = scala, aboveskip =0pt]
 s.layout.highlighting.unallowed.createColorValue
-\end{verbatim}sind ähnlich den implicits in Scala für Neulinge absolut unverständlich. Auch bis die Xtext Quelldateien richtig interpretiert werden konnten, verging einige Zeit.
+\end{lstlisting}sind ähnlich den \textit{implicits} in Scala für Neulinge absolut unverständlich. Auch bis die Xtext Quelldateien richtig interpretiert werden konnten, verging einige Zeit.
 Da das benötigte Metamodell zur Zeit der Entwicklung noch nicht einsatzbereit war, musste sich an einigen Stellen mit Mockups geholfen werden.
-Da bestehende Schnittstellen, des MoDiGens nicht verletzt werden durften, musste die Objektstruktur möglichst derer entsprechen, die durch die Xtext Grammatik eingeführt wurde. Dies ist dahingehend problematisch, dass so auch unsaubere Beziehungen, wie die ColorOrGradient, oder ColorWithTransparency übernommen werden mussten \ref(specialstyle).
+Da bestehende Schnittstellen, des MoDiGens nicht verletzt werden durften, musste die Objektstruktur möglichst derer entsprechen, die durch die Xtext Grammatik eingeführt wurde. Dies ist dahingehend problematisch, dass so auch unsaubere Beziehungen, wie die ColorOrGradient, oder ColorWithTransparency übernommen werden mussten.
 \subsection{Scalaspezifische Probleme}
-Scalaspezifische Probleme gab es tatsächlich nicht wirklich. Scala ist einfach zu erlernen, bietet komfortable Collections, sowie eine ausgezeichnete und einheitliche Collections API. Außerdem bietet Scala Features wie \textit{case classes} und \textit{Pattern Matching}, um nur ein paar zu nennen. Diese Features sind schnell verstanden und umsetzbar. Einzig und allein die Tatsache, dass hier ein Scalaneuling am Werk war, bremste die Arbeit erheblich aus. So wurde zunächst mit langen und sehr komplexen regulären Ausdrücken versucht, beliebige Shapedefinitionen zu parsen, was aber aufgrund der Rekursion der in sich geschachtelten geometrischen Figuren unmöglich ist. Ein Scalakenner, hätte sofort zu den \textit{Parser Combinator} klassen gegriffen, diese waren dem Author zunächst aber noch nicht bekannt. Scala bietet viele Lösungen für viele Probleme, jedoch ist es insbesondere als Scalaneuling zunächst ein Labyrinth aus Möglichkeiten und oft wird erst später bemerkt, dass eine alternative Lösung besser passt.
+Scalaspezifische Probleme gab es tatsächlich nicht viele. Scala ist einfach zu erlernen, bietet komfortable Collections, sowie eine ausgezeichnete und einheitliche Collections API. Außerdem bietet Scala Features wie \textit{case classes} und \textit{Pattern Matching}, um nur ein paar zu nennen. Diese Features sind schnell verstanden und umsetzbar. Einzig und allein die Tatsache, dass hier ein Scala Neuling am Werk war, bremste die Arbeit erheblich aus. So wurde zunächst mit langen und sehr komplexen regulären Ausdrücken versucht, beliebige Shapedefinitionen zu parsen, was aber aufgrund der Rekursion der in sich geschachtelten geometrischen Figuren unmöglich ist. Ein Scala Kenner, hätte sofort zu den \textit{Parser Combinator} Klassen gegriffen, diese waren dem Autor zunächst aber noch nicht bekannt. Scala bietet viele Lösungen für viele Probleme, jedoch ist es insbesondere als Scala Neuling zunächst ein Labyrinth aus Möglichkeiten und oft wird erst später bemerkt, dass eine alternative Lösung besser passt. Ein tatsächlicher Nachteil von Scala gegenüber der Xtext Technik findet sich in der Implementierung der Generatorenklassen wieder. Xtext bietet für die Definition auszugebender Strings Makros an, welche es ermöglichen Kontrollstrukturen wie if-Bedingungen und Schleifen reibungslos in String Definitionen einzubringen. Scala verfügt zwar über einen ähnlich mächtiges Feature namens \textit{String Interpolation}, jedoch hat dies einen entscheidenden Nachteil: Scope. Strings wie
+\begin{lstlisting}[style = scala, literate={«}{{\flqq}}1 {»}{{\frqq}}1]
+"""
+Stencil.groups = {
+	«var i = 0»  
+	«val groupSet = getNodeToPaletteMapping(diagram).keySet()»  
+	«FOR group : groupSet»  
+		«getVarName(group)»  : {index: «i=i+1»  , label: '«group»  ' }«IF group != groupSet.last»  ,«ENDIF»  
+ 	«ENDFOR»  
+};
+"""
+\end{lstlisting}
+Sind schon während sie entstehen so formatiert, wie ihr späterer Output. Das entsprechende Pendant in Scala sieht aus wie folgt:
+\begin{lstlisting}[style = scala]
+var i = 0
+var group = ""
+val groupSet = getNodeToPaletteMapping(diagram).keySet
+s"""
+Stencil.groups = {
+	${
+	for (groupName <- groupSet) yield {
+		group = groupName
+		getVarName(group)
+	}
+}: {index: ${i = i + 1}, label: '$group' }${if (group != groupSet.last) s","}
+};
+"""
+\end{lstlisting}Scala bietet es zwar an über \textit{Escaping} \textit{\$\{\}} Codeblöcke innerhalb von Strings auszuführen, jedoch eröffnen diese Codeblöcke auch einen eigenen Scope. Zählvariablen (beispielsweise) müssen in diesem Fall im überliegenden Scope definiert werden. Da also der gesamte zusammenhängende. Dadurch ist die entstandene Formatierung nicht so gut wie die, die durch die Xtext Makros zu erreichen ist. Das ist tatsächlich nur ein kleines Ärgernis, aber der Vollständigkeit halber aufzuführen.
 
-\section{Schlussfolgerung}
+\section{Schlussfolgerung/Ausblick}
 \subsection{Was wurde erreicht}
+Die Objektstruktur wurde erfolgreich in Scala umgesetzt. Hierbei wurde darauf geachtet, dass alle Modellklassen immutabel sind. In Zukunft kann so auf funktionale Programmiertechniken zurückgegriffen werden und insbesondere paralleler Code effizient genutzt werden. Die DSLs zu Style, Shape, Connection und Diagram können erfolgreich eingelesen werden und übersetzt werden. Hierbei wurde darauf geachtet, dass eine erste Parserlogik (\textit{Lexer}) die eingelesenen Strings in einheitliche Datenformate umwandelt, sodass spezialisiertere Parser ihren Input einheitlich behandeln können. So ist der Parser relativ leicht zu erweitern. Mehrfachvererbung bei Styles war mit Scala problemlos umsetzbar. Das iterieren über Elternelemente ist mittels generischer \textit{Getter Funktionen} unwahrscheinlich einfach, im Gegensatz zu Sprachen wie Java. Auch die (Mehrfach-) Vererbung bei Shapes funktioniert wie gewünscht. Style Eigenschaften werden transitiv an unterliegende Elemente weitergegeben, wobei die hierdurch entstehenden Abhängigkeiten aus Anwendersicht statisch gebunden werden. Tatsächlich werden Style Eigenschaften natürlich dynamisch zugewiesen, der Anwender merkt hiervon jedoch nichts. Somit ist die Anwendung besonders bei großen Baumstrukturen der Modellklassen schneller, als wenn Style Eigenschaften erst bei Bedarf aufgelöst werden würden. Durch hohen Abstraktionsgrad und Features wie \textit{implicits} und \textit{apply} Methoden ist es Möglich Scala annähernd so einfach zu schreiben wie Pseudocode.
 \subsection{Was wurde nicht erreicht}
-\subsection{Fazit}
+Da zu Anfang entschieden wurde die Vergabe transitiver Style Eigenschaften schon bei Objekterzeugung weiterzugeben, musste später festgestellt werden, dass aufgrund der Instantiierungsreihenfolge Containerklassen notwendig sind, welche es erlauben die Erzeugung einer Modellklasse auf einen späteren Zeitpunkt zu verschieben. Dies erzeugt einen zusätzlichen Overhead an Speicherbedarf. Alle erzeugten Objekte von Modellklassen werden in einem Cache hinterlegt um es zu ermöglichen sie über ihren Namen mittels eines Mappings zu referenzieren. Auch die Skizzen, also die Containerklassen, der Modellklassen müssen in diesem Cache hinterlegt werden, um fortlaufend bei Bedarf erzeugt werden zu können. So können also die Containerklassen auch nicht nach Erzeugung einer zugehörigen Modellklasse gelöscht werden. Performanz für Speicherauslastung.
+Über die Anwendung JVisualVM\cite{jvisualvm} lässt sich hierzu ein Heapdump betrachten. Beispielhaft wurden 10.000 Shapes eingelesen:
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics[width=\textwidth]{Bilder/10000shapes.png}
+		\caption{Ausschnitt aus dem Heapdump, generiert durch JVisualVM}
+		\label{jvisualvm}
+	\end{center}
+\end{figure}Ersichtlich wird, dass bei 10000 Shapes auch 10000 ShapeSketches erzeugt werden. Das ist der angesprochene zusätzliche Overhead.

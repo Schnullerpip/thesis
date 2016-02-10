@@ -6,11 +6,17 @@
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
 \usepackage{cite}
-\usepackage[square, numbers]{natbib}
+%\usepackage[square, numbers]{natbib}
 \usepackage{here}
 \usepackage{url}
 \usepackage{xr}
-\externaldocument{Technologien}
+
+\usepackage{natbib}
+%\bibliographystyle{abbrvnat}
+\bibliographystyle{plainnat}
+\setcitestyle{authoryear,open={},close={}, aysep={~}, notesep={:}}
+
+
 
 \usepackage{color}
 \usepackage{textcomp}
@@ -97,17 +103,18 @@
 \newcommand{\zusammenfassung}{$[$Text der Zusammenfassung etwa 150 Worte. Es soll der 
 	L"osungsweg beschrieben sein.$]$}
 \newcommand{\ausgabedatum}{$[$Datum$]$}
-\newcommand{\abgabedatum}{$[$Datum$]$}
+\newcommand{\abgabedatum}{15.02.2016}
 \newcommand{\autor}{Julian Müller}
 \newcommand{\autorStrasse}{Mondrauteweg}
 \newcommand{\autorPLZ}{78467}
 \newcommand{\autorOrt}{Konstanz}
 \newcommand{\autorGeburtsort}{Donaueschingen}
-\newcommand{\autorGeburtsdatum}{07.07.1991}
+\newcommand{\autorGeburtsdatum}{07.07.1991 }
 \newcommand{\prueferA}{Prof. Doc. Marko Boger}
 \newcommand{\prueferB}{Titel, Markus Gerhart}
 \newcommand{\firma}{HTWG Konstanz}
-\newcommand{\studiengang}{$[$Software-Engineering/Technische Informatik/Wirtschaftsinformatik$]$}
+\newcommand{\studiengang}{Angewandte Informatik/Softwareengineering}
+
 
 
 \begin{document}
@@ -128,7 +135,6 @@
 \include{Umsetzung}
 \include{Fazit}
 
-\bibliographystyle{plainnat}
 \bibliography{lit}
 
 \end{document}
