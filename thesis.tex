@@ -11,10 +11,15 @@
 \usepackage{url}
 \usepackage{xr}
 
-\usepackage{natbib}
-%\bibliographystyle{abbrvnat}
-\bibliographystyle{plainnat}
-\setcitestyle{authoryear,open={},close={}, aysep={~}, notesep={:}}
+\usepackage[numbers]{natbib}
+
+\newcommand{\Mycite}[1]{%
+  \cite{#1}~\citeauthor{#1}~\citeyear{#1}}
+\newcommand{\Myciten}[2]{%
+  \cite{#1}~\citeauthor{#1}~\citeyear{#1}: S. #2}
+\newcommand{\Myciteweb}[1]{
+	\cite{#1}~\citetitle{#1}}
+%\setcitestyle{authoryear,open={},close={}, notesep={:}}
 
 
 
@@ -135,6 +140,7 @@
 \include{Umsetzung}
 \include{Fazit}
 
+\bibliographystyle{plainnat}
 \bibliography{lit}
 
 \end{document}
