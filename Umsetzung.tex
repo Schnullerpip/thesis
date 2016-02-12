@@ -161,6 +161,7 @@ Babuschka {
 }
 \end{lstlisting}sind reguläre Ausdrücke dem Problem nicht mehr gewachsen.
 In diesem Fall muss auf eine komplexere Technologie zurückgegriffen werden.
+\\\\\\\\\\\\\\\\\\
 \subsection{Lösung Parser Combinators}Hierbei bieten sich die \textit{Parser Combinator} Klassen an. Wie der Name schon vermuten lässt, kann man hier Parser zusammenschalten, um so komplexe Ausdrücke auswerten zu können. Hierfür werden Methoden definiert, welche als Rückgabewert einen \textit{Parser$[$T$]$} liefern. Für \textit{Parser} sind unter anderem die Methoden \textit{$\sim$}, \textit{$\sim$\textgreater} und \textit{\textless$\sim$} angegeben, welche sich wie normale Operatoren anfühlen und verwenden lassen. Braun hat dies in seinem Werk \textit{SCALA Objektfunktionale Programmierung} wie folgt einleuchtend erklärt (\Myciten{braun:scala}{182}):
 \begin{itemize}
 \item \textit{a} $\sim$ \textit{b} erzeugt einen Parser, der zuerst a, dann mit b parst und das Gesamtergebnis zurückgibt.  
@@ -181,7 +182,7 @@ p: NameParser = NameParser@2ecaa79e
 
 scala> p.parse(p.name, "hello my name is Julian")
 res0: p.ParseResult[String] = [1.24] parsed: Julian
-\end{lstlisting}Mit relativ wenig Aufwand können sogar sehr komplexe Grammatiken beschrieben werden (siehe Listing \ref{lst:babuschkaexample}).\\\\\\
+\end{lstlisting}Mit relativ wenig Aufwand können sogar sehr komplexe Grammatiken beschrieben werden (siehe Listing \ref{lst:babuschkaexample}).\\\\\\\\\\
 \begin{lstlisting}[style=scala, caption={Einfaches Beispiel zum Parsen einer rekursiven Grammatik}, label = {lst:babuschkaexample}]
 scala> import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -269,13 +270,13 @@ In dem Companion Objekt von Style/Shape, in dem die Attribute für einen neuen S
 val extendedStyle:List[Style] = parents.getOrElse(List()).foldLeft(List[Style]())((styles, s_name) =>
       if(cache.styleHierarchy.contains(s_name.trim)) s_name.trim :: styles else styles)
 \end{lstlisting}Dafür wird in der vom Parser mitgegebenen ClassHierarchy (\textit{styleHierarchy}) nach den Namen der Eltern gesucht (wieso hierbei die ClassHierarchy Instanz nicht angesprochen werden muss und warum der Liste aus Styles augenscheinlich immer nur Strings zugewiesen werden, wird in \ref{sectionimplicit} erklärt).
-Anschließend werden die verschiedenen Variablen, die später an den Konstruktor übergeben werden vordefiniert (siehe Listing \ref{lst:relevant}).
+Anschließend werden die verschiedenen Variablen, die später an den Konstruktor übergeben werden vordefiniert (siehe Listing \ref{lst:relevant}).\\\\\\\\
 \begin{lstlisting}[style=scala, caption = {Zuweisung der Felder der Elternelemente}, label = {lst:relevant}]
 var description:Option[String]=relevant{_.description}
 var line_color:Option[Color]=relevant{_.line_color}
 var line_style:Option[LineStyle]=relevant{_.line_style}
 var line_width:Option[Int]=relevant{_.line_width}
-\end{lstlisting}Auffällig ist hierbei, dass die Zuweisungen beinahe auch für nicht Programmierer lesbar sind. Wie zum Beispiel die erste Zuweisung in Listing \ref{lst:relevant}: \textit{"'Weise der description die relevante bestehende description zu"'}. Hinter diesem Aufruf verbirgt sich eine Funktion, die in ClassHierarchy definiert wurde, um einfach auf die Attribute der Elternklasse zugreifen zu können (siehe Listing \ref{lst:mostrelevant}).\\\\\\\\\\\\
+\end{lstlisting}Auffällig ist hierbei, dass die Zuweisungen beinahe auch für nicht Programmierer lesbar sind. Wie zum Beispiel die erste Zuweisung in Listing \ref{lst:relevant}: \textit{"'Weise der description die relevante bestehende description zu"'}. Hinter diesem Aufruf verbirgt sich eine Funktion, die in ClassHierarchy definiert wurde, um einfach auf die Attribute der Elternklasse zugreifen zu können (siehe Listing \ref{lst:mostrelevant}).
 \begin{lstlisting}[style=scala, caption = {Funktion mostRelevant}, label = {lst:mostrelevant}]
 def mostRelevant[T, C](stack:List[C])(getter: C => Option[T]):Option[T] = {
     for (parent <- stack) {
@@ -294,7 +295,7 @@ Momentan müsste ein Aufruf aus dem Style Companion Objekt wie in Listing \ref{l
 \begin{lstlisting}[style=scala, caption = {Beispielhafter Aufruf von mostRelevant}, label = {lst:ohnehilfsmethode}]
 var description: Option[String] = 
     ClassHierarchy.mostRelevant(extendedStyles){ _.description }
-\end{lstlisting}Um selbst diesen Aufruf noch zu verkürzen wird sich einfach einer weiteren Hilfsmethode, namens \textit{relevant} bedient (siehe Listing \ref{lst:defrelevant}).\\\\
+\end{lstlisting}Um selbst diesen Aufruf noch zu verkürzen wird sich einfach einer weiteren Hilfsmethode, namens \textit{relevant} bedient (siehe Listing \ref{lst:defrelevant}).
 \begin{lstlisting}[style=scala, caption = {Hilfsfunktion relevant}, label = {lst:defrelevant}]
 def relevant[T](f: Style => Option[T]) =
     ClassHierarchy.mostRelevant(extendedStyle) {f}
