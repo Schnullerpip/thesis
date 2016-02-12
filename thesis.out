@@ -1,30 +1,48 @@
 \BOOKMARK [0][-]{chapter*.1}{Ehrenw\366rtliche Erkl\344rung}{}% 1
-\BOOKMARK [0][-]{chapter.1}{Einleitung}{}% 2
-\BOOKMARK [1][-]{section.1.1}{Was Ist MoDiGen}{chapter.1}% 3
-\BOOKMARK [1][-]{section.1.2}{Aufgabenstellung}{chapter.1}% 4
-\BOOKMARK [0][-]{chapter.2}{Grundlagen: Scala/Xtext}{}% 5
-\BOOKMARK [1][-]{section.2.1}{Scala}{chapter.2}% 6
-\BOOKMARK [1][-]{section.2.2}{Xtext}{chapter.2}% 7
-\BOOKMARK [0][-]{chapter.3}{Ansatz}{}% 8
-\BOOKMARK [1][-]{section.3.1}{Objektstruktur}{chapter.3}% 9
-\BOOKMARK [1][-]{section.3.2}{Parser}{chapter.3}% 10
-\BOOKMARK [2][-]{subsection.3.2.1}{Regul\344re Ausdr\374cke}{section.3.2}% 11
-\BOOKMARK [2][-]{subsection.3.2.2}{Factory Klassen}{section.3.2}% 12
-\BOOKMARK [2][-]{subsection.3.2.3}{Parserlogik}{section.3.2}% 13
-\BOOKMARK [2][-]{subsection.3.2.4}{Kennzeichnung nicht definierter Felder in Modellklassen}{section.3.2}% 14
-\BOOKMARK [2][-]{subsection.3.2.5}{Vererbungsmechanismus \374ber Referenz auf Elterninstanzen}{section.3.2}% 15
-\BOOKMARK [2][-]{subsection.3.2.6}{Vererbungsmechanismus durch direkte Weitergabe der Attribute bei Instantiierung}{section.3.2}% 16
-\BOOKMARK [1][-]{section.3.3}{Generatoren}{chapter.3}% 17
-\BOOKMARK [0][-]{chapter.4}{Umsetzung}{}% 18
-\BOOKMARK [1][-]{section.4.1}{Objektstruktur}{chapter.4}% 19
-\BOOKMARK [2][-]{subsection.4.1.1}{Modellklassen}{section.4.1}% 20
-\BOOKMARK [2][-]{subsection.4.1.2}{Problematik der rekursiven regul\344ren Ausdr\374cke}{section.4.1}% 21
-\BOOKMARK [2][-]{subsection.4.1.3}{L\366sung Parser Combinators}{section.4.1}% 22
-\BOOKMARK [1][-]{section.4.2}{Vererbung}{chapter.4}% 23
-\BOOKMARK [2][-]{subsection.4.2.1}{Vererbung bei Shapes}{section.4.2}% 24
-\BOOKMARK [2][-]{subsection.4.2.2}{Transitivit\344t der Styleeigenschaften}{section.4.2}% 25
-\BOOKMARK [0][-]{chapter.5}{Fazit}{}% 26
-\BOOKMARK [1][-]{section.5.1}{Probleme}{chapter.5}% 27
-\BOOKMARK [1][-]{section.5.2}{Schlussfolgerung/Ausblick}{chapter.5}% 28
-\BOOKMARK [2][-]{subsection.5.2.1}{Was wurde erreicht}{section.5.2}% 29
-\BOOKMARK [2][-]{subsection.5.2.2}{Was wurde nicht erreicht}{section.5.2}% 30
+\BOOKMARK [0][-]{chapter*.1}{Abbildungsverzeichnis}{}% 2
+\BOOKMARK [0][-]{chapter*.2}{Listings}{}% 3
+\BOOKMARK [0][-]{chapter.1}{Einleitung}{}% 4
+\BOOKMARK [1][-]{section.1.1}{Was Ist MoDiGen?}{chapter.1}% 5
+\BOOKMARK [1][-]{section.1.2}{Aufgabenstellung}{chapter.1}% 6
+\BOOKMARK [0][-]{chapter.2}{Grundlagen: Scala/Xtext}{}% 7
+\BOOKMARK [1][-]{section.2.1}{Scala}{chapter.2}% 8
+\BOOKMARK [1][-]{section.2.2}{Xtext}{chapter.2}% 9
+\BOOKMARK [0][-]{chapter.3}{Ansatz}{}% 10
+\BOOKMARK [1][-]{section.3.1}{Objektstruktur}{chapter.3}% 11
+\BOOKMARK [2][-]{subsection.3.1.1}{ClassHierarchy}{section.3.1}% 12
+\BOOKMARK [1][-]{section.3.2}{Parser}{chapter.3}% 13
+\BOOKMARK [2][-]{subsection.3.2.1}{Parsing Mechanismus und Parserlogik}{section.3.2}% 14
+\BOOKMARK [2][-]{subsection.3.2.2}{Factory Klassen}{section.3.2}% 15
+\BOOKMARK [2][-]{subsection.3.2.3}{Parsing Ablauf}{section.3.2}% 16
+\BOOKMARK [1][-]{section.3.3}{Aufl\366sung von Vererbungshierarchien}{chapter.3}% 17
+\BOOKMARK [2][-]{subsection.3.3.1}{Kennzeichnung nicht definierter Felder in Modellklassen}{section.3.3}% 18
+\BOOKMARK [2][-]{subsection.3.3.2}{Vererbungsmechanismus \374ber Referenz auf Elterninstanzen}{section.3.3}% 19
+\BOOKMARK [2][-]{subsection.3.3.3}{Vererbungsmechanismus durch direkte Weitergabe der Attribute bei Instantiierung}{section.3.3}% 20
+\BOOKMARK [1][-]{section.3.4}{Generatoren}{chapter.3}% 21
+\BOOKMARK [0][-]{chapter.4}{Umsetzung}{}% 22
+\BOOKMARK [1][-]{section.4.1}{Objektstruktur}{chapter.4}% 23
+\BOOKMARK [2][-]{subsection.4.1.1}{Modellklassen}{section.4.1}% 24
+\BOOKMARK [2][-]{subsection.4.1.2}{Besonderheiten bei Style}{section.4.1}% 25
+\BOOKMARK [2][-]{subsection.4.1.3}{Besonderheiten bei Shape}{section.4.1}% 26
+\BOOKMARK [2][-]{subsection.4.1.4}{Besonderheiten bei Diagram}{section.4.1}% 27
+\BOOKMARK [2][-]{subsection.4.1.5}{Vererbung/ClassHierarchy}{section.4.1}% 28
+\BOOKMARK [1][-]{section.4.2}{Implementierung der Parserklassen}{chapter.4}% 29
+\BOOKMARK [2][-]{subsection.4.2.1}{Factory Klassen}{section.4.2}% 30
+\BOOKMARK [2][-]{subsection.4.2.2}{Problematik der rekursiven regul\344ren Ausdr\374cke}{section.4.2}% 31
+\BOOKMARK [2][-]{subsection.4.2.3}{L\366sung Parser Combinators}{section.4.2}% 32
+\BOOKMARK [2][-]{subsection.4.2.4}{Prinzip der Parserlogik}{section.4.2}% 33
+\BOOKMARK [1][-]{section.4.3}{Vererbung}{chapter.4}% 34
+\BOOKMARK [2][-]{subsection.4.3.1}{Vererbung bei Shapes}{section.4.3}% 35
+\BOOKMARK [2][-]{subsection.4.3.2}{Transitivit\344t der Styleeigenschaften}{section.4.3}% 36
+\BOOKMARK [2][-]{subsection.4.3.3}{Modell und Skizze; Problematik der Instantiierungsreihenfolge}{section.4.3}% 37
+\BOOKMARK [2][-]{subsection.4.3.4}{Generatorenklassen}{section.4.3}% 38
+\BOOKMARK [1][-]{section.4.4}{Ausf\374hrliches Beispiel}{chapter.4}% 39
+\BOOKMARK [1][-]{section.4.5}{Cache}{chapter.4}% 40
+\BOOKMARK [2][-]{subsection.4.5.1}{Implicits}{section.4.5}% 41
+\BOOKMARK [0][-]{chapter.5}{Fazit}{}% 42
+\BOOKMARK [1][-]{section.5.1}{Probleme}{chapter.5}% 43
+\BOOKMARK [2][-]{subsection.5.1.1}{Scalaspezifische Probleme}{section.5.1}% 44
+\BOOKMARK [1][-]{section.5.2}{Schlussfolgerung/Ausblick}{chapter.5}% 45
+\BOOKMARK [2][-]{subsection.5.2.1}{Was wurde erreicht}{section.5.2}% 46
+\BOOKMARK [2][-]{subsection.5.2.2}{Was nicht erreicht wurde}{section.5.2}% 47
+\BOOKMARK [2][-]{subsection.5.2.3}{Ausblick}{section.5.2}% 48
