@@ -6,7 +6,7 @@ Da bevor jeder anderer Logik zunächst die zu verwendenden Klassen definiert wer
 Entgegen der Objektstruktur, die durch die DSL in Xtext beschrieben wird, mussten einige Beziehungen geändert werden (siehe Abbildungen \ref{objectstructureStyle}, \ref{objectstructureShape}, \ref{objectstructureDiagram}).
 Die Xtext Grammatik definiert zwar, welche Elemente nur Definitionsregeln sind und was in die Objektstruktur aufgenommen wird, jedoch liegt es letztlich beim Entwickler zu entscheiden, was in die endgültige Objektstruktur übernommen wird und was nicht.
 \subsection{Besonderheiten bei Style}\label{specialstyle}
-Bei der Umsetzung der einzelnen Modellklassen aus der Xtext Grammatik in die Objektstruktur in Scala, kam es regelmäßig zu Situationen, in denen die Objektstruktur nicht 1:1 auf Scala übernommen werden konnte, da die verschiedenen Sprachen verschiedene Features bedienen, oder eben nicht (z.B. Xtext Schlüsselwort dispatch). Außerdem galt es bestehende komplexe Strukturen möglicherweise vereinfacht umzusetzen. Beispielsweise enthält die Definition der Style klasse in Xtext ein Style Layout, welches die eigentlichen Attribute der Style klasse auflistet (siehe Listing \ref{lst:xtextdsl}).
+Bei der Umsetzung der einzelnen Modellklassen aus der Xtext Grammatik in die Objektstruktur in Scala, kam es regelmäßig zu Situationen, in denen die Objektstruktur nicht 1:1 auf Scala übernommen werden konnte, da die verschiedenen Sprachen verschiedene Features bedienen, oder eben nicht (z.B. Xtext Schlüsselwort dispatch). Außerdem galt es bestehende komplexe Strukturen möglicherweise vereinfacht umzusetzen. Beispielsweise enthält die Definition der Style klasse in Xtext ein Style Layout, welches die eigentlichen Attribute der Style klasse auflistet (siehe Listing \ref{lst:xtextdsl}).\\\\
 \begin{lstlisting}[style=spray, caption={stark vereinfachter Auszug aus der Xtext Grammatik, die Styles beschreibt}, label = {lst:xtextdsl}]
 Style:
     {Style}
@@ -189,7 +189,7 @@ p: NameParser = NameParser@2ecaa79e
 
 scala> p.parse(p.name, "hello my name is Julian")
 res0: p.ParseResult[String] = [1.24] parsed: Julian
-\end{lstlisting}Mit relativ wenig Aufwand können sogar sehr komplexe Grammatiken beschrieben werden (siehe Listing \ref{lst:babuschkaexample}).
+\end{lstlisting}Mit relativ wenig Aufwand können sogar sehr komplexe Grammatiken beschrieben werden (siehe Listing \ref{lst:babuschkaexample}).\\\\\\
 \begin{lstlisting}[style=scala, caption={Einfaches Beispiel zum Parsen einer rekursiven Grammatik}, label = {lst:babuschkaexample}]
 scala> import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -227,7 +227,7 @@ def arguments: Parser[String] =
 \end{lstlisting}
 Es wird also zunächst definiert, dass beim Parsen von Attributen ein \textit{attributePair} erwartet wird. Dieses \textit{attributePair} besteht aus einer \textit{variable} und (\textasciitilde) \textit{arguments}. Eine Variable wird in der nächsten Regel bzw. Methode definiert.
 Die vielen verschiedenen Möglichkeiten den Variablenwert zu ermitteln führt darauf zurück, dass dieser Teil nun eben sehr variabel ist. An dieser Stelle kann jeder dem System bekannte Datentyp folgen. Während ein \textit{argument\_classic} erwartet, dass ein '=' Zeichen und anschließend irgendein Int, double oder String folgt, deckt ein \textit{argument\_advanced\_explicit} die Möglichkeit eines Arguments wie in Listing \ref{lst:argumentexplicit}.
-\begin{lstlisting}[style=scala, aboveskip=0pt, caption = {Beispiel für eine Attributsdefinition mit expliziter Parameterbenennung}, label = {lst:argumentexplicit}]
+\begin{lstlisting}[style=scala, caption = {Beispiel für eine Attributsdefinition mit expliziter Parameterbenennung}, label = {lst:argumentexplicit}]
 someSize ( width = 10, height = 12)
 \end{lstlisting}Da diese und weitere Parserregeln öfter gebraucht werden, sind diese in einem Trait namens \textit{CommonParserMethods} zusammengefasst. Die \textit{Companion Objekte} der Modellklassen, die gleichzeitig den Parser bilden, erweitern diesen Trait.
 Blickt man zurück auf \textit{attributePair}, sieht man außerdem, dass diese Methode ein \textit{Tupel} zurück gibt, welches eben zum einen den Variablennamen und außerdem den Wert zurückliefert.
@@ -277,7 +277,7 @@ In dem Companion Objekt von Style/Shape, in dem die Attribute für einen neuen S
 val extendedStyle:List[Style] = parents.getOrElse(List()).foldLeft(List[Style]())((styles, s_name) =>
       if(cache.styleHierarchy.contains(s_name.trim)) s_name.trim :: styles else styles)
 \end{lstlisting}Dafür wird in der vom Parser mitgegebenen ClassHierarchy (\textit{styleHierarchy}) nach den Namen der Eltern gesucht (wieso hierbei die ClassHierarchy Instanz nicht angesprochen werden muss und warum der Liste aus Styles augenscheinlich immer nur Strings zugewiesen werden, wird in \ref{sectionimplicit} erklärt).
-Anschließend werden die verschiedenen Variablen, die später an den Konstruktor übergeben werden vordefiniert (siehe Listing \ref{lst:relevant}).
+Anschließend werden die verschiedenen Variablen, die später an den Konstruktor übergeben werden vordefiniert (siehe Listing \ref{lst:relevant}).\\\\\\\\
 \begin{lstlisting}[style=scala, caption = {Auszug aus Code Zuweisung der Felder der Elternelemente}, label = {lst:relevant}]
 var description:Option[String]=relevant{_.description}
 var line_color:Option[Color]=relevant{_.line_color}
@@ -521,21 +521,15 @@ private def parseGeometricModels
 \section{Cache}Bisher wurde bereits einige male erwähnt, dass sich Modellklassen untereinander referenzieren. Diese Referenzierungen können aber Aufgrund der Problematik der Instantiierungsreihenfolge nicht während des Parsingvorgangs erfolgen. Sonst würde auf Objekte verwiesen werden, die selber bereits erst in der Mache sind.
 Oder es geht schlicht um die Problematik, dass Styles und Shapes unabhängig voneinander definiert werden können, Shapes jedoch namentlich auf Styles verweisen. Selbst wenn es also nur darum geht Referenzen auf erstellte Styles zu behalten um sie nicht an den \textit{Garbage Collector} zu verlieren, ist ein Mechanismus nötig, der sich entsprechende Referenzen behält und wiederum bereitstellt. Da sich Diagrams, Shapes und Styles untereinander referenzieren können sollen, muss der Parser also in der Lage sein Instanzen zu erzeugen und gleichzeitig auch zu verwalten. Hierbei wurde stets darauf geachtet, dass der SprayParser keine statischen Zustände hält. Ausgehend davon, dass der Parser zukünftig in einer Multi-Client-fähigen Umgebung eingesetzt wird, ist so garantiert, dass sich verschiedene Clients niemals die selben Ressourcen teilen und somit eventuell inkonsistente Daten produzieren. Schon eine gemeinsame Abhängigkeit eines Namensraums wäre nicht wünschenswert, da Modellklassen mit gleichen Namen sonst je nach implementierung entweder Exceptions auslösen würden oder sich gegenseitig überschreiben könnten. Wenn aber keine statischen Zustände gehalten werden kann jeder Client mit einer eigenen SrpayParser Instanz kommunizieren. Außerdem kann so auf komplizierte synchronisationsmechanismen verzichtet werden. Es wird beispielsweise zunächst eine Shape geparsed, auf die ein Diagram verweisen soll. Jedoch kann das Diagram die Shape nicht referenzieren, wenn es die entsprechende Referenz gar nicht kennt. Um die Referenz auf die Shape also nicht zu verlieren, muss sie lokal gespeichert und über eine Eigenschaft erreichbar sein, welche dem Diagram (besser gesagt dem Benutzer) bekannt ist und möglichst eindeutig sein sollte. Hierfür bietet sich der Name der Shape an. Anstatt aber nun IDs in Form von Strings zu halten, sondern auf bestehende Objekte verweisen zu können, müssen die Instanzen der generierten Shapes usw. lokal in einer Map gesichert werden. Hierfür wurde eine Hilfsklasse \textit{Cache} erstellt, die Container für alle relevanten Datentypen bereitstellt. So können fertig instantiierte Objekte zwischengespeichert und bei Bedarf über die entsprechende Map der Cache Instanz referenziert werden.
 \subsection{Implicits}\label{sectionimplicit}
-Hier wird Gebrauch von einer sehr mächtigen Eigenschaft von Scala gemacht, den \textit{implicits}. Wenn man sich beispielsweise im Shapekonstruktor befindet und auf ein parentShape-element zugreifen will, bräuchte man normalerweise einen Aufruf wie den folgenden:
-\begin{lstlisting}[style=scala, aboveskip=0pt]
-val someShape:Shape =
-someCacheInstance.ContainerOfType[T].get("identifier").data
-\end{lstlisting}
-Oder weniger abstrakt:
-\begin{lstlisting}[style=scala, aboveskip=0pt]
+Hier wird Gebrauch von einer sehr mächtigen Eigenschaft von Scala gemacht, den \textit{implicits}. Wenn man sich beispielsweise im Shapekonstruktor befindet und auf ein parentShape-element zugreifen will, bräuchte man normalerweise einen Aufruf wie in Listing \ref{lst:excessivecache}.
+\begin{lstlisting}[style=scala, caption = {Ausführlicher Zugriff auf ein Cache Element}, label = {lst:excessivecache}]
 val someShape:Shape= cache.shapeHierarchy(parent_ID).data
-\end{lstlisting}
-Selbst Aufrufe, die wie im obigen Beispiel recht kurz ausfallen, zerstören die Lesbarkeit ohnehin schon komplexer Codezeilen. Scala erlaubt es implicits zu definieren, welche unter anderem implizite Typumwandlungen nach angegebener Methode durchführen können. Wenn in einem sogenannten \textit{package object} besagte implicits definiert werden, ist es sogar möglich das entsprechende package object in einer Quelldatei zu importieren und so die impliziten Definitionen überall in den gewünschten Scope zu bringen. Im Falle der häufig benutzten Cache Klasse, sehen Zugriffe auf den Cache nun wie folgt aus:
-\begin{lstlisting}[style=scala, aboveskip=0pt]
+\end{lstlisting}Selbst Aufrufe, die wie im obigen Beispiel recht kurz ausfallen, zerstören die Lesbarkeit ohnehin schon komplexer Codezeilen. Scala erlaubt es implicits zu definieren, welche unter anderem implizite Typumwandlungen nach angegebener Methode durchführen können. Wenn in einem sogenannten \textit{package object} besagte implicits definiert werden, ist es sogar möglich das entsprechende package object in einer Quelldatei zu importieren und so die impliziten Definitionen überall in den gewünschten Scope zu bringen. Im Falle der häufig benutzten Cache Klasse, sehen Zugriffe auf den Cache nun wie in Listing \ref{lst:simplecache}.
+\begin{lstlisting}[style=scala, caption = {Vereinfachter Zugriff auf ein Cache Element}, label = {lst:simplecache}]
 val parentShape:Shape = parent_ID
 \end{lstlisting}
-\textit{parent\_ID} ist tatsächlich immernoch ein String, wird aber vom Compiler als unpassend erkannt. Daraufhin sucht er nach einer impliziten Methode, welche in der Lage ist, den String in den gewünschten Typ (hier Shape) umzuwandeln. Der Programmierer, kann seine Cache-Instanz also sogar ohne explizit auf sie zugreifen zu müssen - eben implizit - benutzen. So kann man sich auf die wesentlichen Aspekte der Problemstellung konzentrieren. In diesem Fall ist die manuelle Typisierung der \textit{parentShape} Konstante allerdings zwingend, da der Compiler sonst eine valide Zuweisung eines Strings zu einer nicht typisierten Konstante feststellen würde und daraufhin den Typ String inferieren würde. Die entsprechende Definition des implicits im package object \textit{model.parser} sieht aus wie folgt:
-\begin{lstlisting}[style=scala, aboveskip=0pt]
+\textit{parent\_ID} ist tatsächlich immernoch ein String, wird aber vom Compiler als unpassend erkannt. Daraufhin sucht er nach einer impliziten Methode, welche in der Lage ist, den String in den gewünschten Typ (hier Shape) umzuwandeln. Der Programmierer, kann seine Cache-Instanz also sogar ohne explizit auf sie zugreifen zu müssen - eben implizit - benutzen. So kann man sich auf die wesentlichen Aspekte der Problemstellung konzentrieren. In diesem Fall ist die manuelle Typisierung der \textit{parentShape} Konstante allerdings zwingend, da der Compiler sonst eine valide Zuweisung eines Strings zu einer nicht typisierten Konstante feststellen würde und daraufhin den Typ String inferieren würde. Die entsprechende Definition des implicits im package object \textit{model.parser} sieht aus wie in Listing \ref{lst:implicitdefinition}.
+\begin{lstlisting}[style=scala, caption = {Auszug aus Code Definition einer Impliziten Typumwandlung}, label = {lst:implicitdefinition}]
 implicit def IDtoShape(id:String)(implicit c:Cache): Shape =
 c.shapeHierarchy(id).data
 \end{lstlisting}Die Umwandlung der mit implicit gekennzeichneten Funktion nimmt dem Programmierer nun den Zwischenschritt ab über die Cacheinstanz die richtige Collection ausfindig zu machen und den gewünschten String aufzulösen.
